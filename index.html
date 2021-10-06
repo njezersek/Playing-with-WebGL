@@ -32,76 +32,88 @@
 
 		uniform vec2 uScreenSize;
 		uniform vec4 uColor;
+		uniform float uTime;
 		
 		void main(){
-			gl_FragColor = vec4(gl_FragCoord.x/uScreenSize.x, gl_FragCoord.y/uScreenSize.y, uColor.x, 1.0);
+			gl_FragColor = vec4(gl_FragCoord.x/uScreenSize.x, gl_FragCoord.y/uScreenSize.y, uTime/1000.0, 1.0);
 		}
 	</script>
 
 	<script>
-		function main(){
-			let c = document.getElementById('canvas');
-			c.width = window.innerWidth;
-			c.height = window.innerHeight;
-			
-			let gl = c.getContext('webgl');
+		let c = document.getElementById('canvas');
+		c.width = window.innerWidth;
+		c.height = window.innerHeight;
+		
+		let gl = c.getContext('webgl');
 
-			const vertexShader = loadShader(gl, gl.VERTEX_SHADER, document.getElementById('vs').innerText);
-			const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, document.getElementById('fs').innerText);
+		const vertexShader = loadShader(gl, gl.VERTEX_SHADER, document.getElementById('vs').innerText);
+		const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, document.getElementById('fs').innerText);
 
-			// Create the shader program
-			const shaderProgram = gl.createProgram();
-			gl.attachShader(shaderProgram, vertexShader);
-			gl.attachShader(shaderProgram, fragmentShader);
-			gl.linkProgram(shaderProgram);
+		// Create the shader program
+		const shaderProgram = gl.createProgram();
+		gl.attachShader(shaderProgram, vertexShader);
+		gl.attachShader(shaderProgram, fragmentShader);
+		gl.linkProgram(shaderProgram);
 
-			// If creating the shader program failed, alert
-			if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-				alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
-				return null;
-			}
+		// If creating the shader program failed, alert
+		if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+			alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
+		}
 
-			aVertexPosition = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
+		aVertexPosition = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
 
-			uScreenSize = gl.getUniformLocation(shaderProgram, "uScreenSize")
-			uColor = gl.getUniformLocation(shaderProgram, 'uColor');
+		uScreenSize = gl.getUniformLocation(shaderProgram, "uScreenSize")
+		uColor = gl.getUniformLocation(shaderProgram, 'uColor');
+		uTime = gl.getUniformLocation(shaderProgram, 'uTime');
 
-			console.log(uScreenSize, uColor, aVertexPosition);
+		const vertexData = new Float32Array([
+			-1, -1,
+			-1, 1,
+			1, -1,
+//			1, 1,
+		]);
 
-			const vertexData = new Float32Array([
-				-1, -1,
-				-1, 1,
-				1, -1,
-				1, 1,
-			]);
+		const buffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+		gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW);
+		gl.vertexAttribPointer(
+			aVertexPosition,
+			2, // num components
+			gl.FLOAT, // data type
+			false, // normalized
+			0, // strinde
+			0 // offste
+		);
+		gl.enableVertexAttribArray(aVertexPosition);
 
-			const buffer = gl.createBuffer();
-			gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-			gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW);
-			gl.vertexAttribPointer(
-				aVertexPosition,
-				2, // num components
-				gl.FLOAT, // data type
-				false, // normalized
-				0, // strinde
-				0 // offste
-			);
-			gl.enableVertexAttribArray(aVertexPosition);
+		function tick(t){
+			//console.log(t);
+			render(t);
+			window.requestAnimationFrame((t) => tick(t));
+		}
 
+		
+		function render(t){
 			// Clear the canvas before we start drawing on it.
 			gl.clearColor(0.0, 0.0, 0.0, 1.0);
 			gl.clearDepth(1.0);
 			gl.enable(gl.DEPTH_TEST);
 			gl.depthFunc(gl.LEQUAL);
 			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
+	
 			gl.useProgram(shaderProgram);
-			
+	
 			gl.uniform2f(uScreenSize, c.width, c.height);
 			gl.uniform4f(uColor, 0, 0, 0, 1);
+			gl.uniform1f(uTime, t);
+	
+			vertexData[0] = t/10000;
 
+			gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+			gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW);
+	
+			gl.drawArrays(gl.TRIANGLES, 0, 4);
 
-			gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 		}
 
 
@@ -119,7 +131,7 @@
 			return shader;
 		}
 
-		window.onload = main;
+		window.onload = tick;
 	</script>
 </body>
 </html>
