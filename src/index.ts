@@ -1,3 +1,5 @@
 import test from 'test';
 
-console.log("Hello Webpack!", test());
+import shader from './shader.glsl'
+
+console.log(shader);

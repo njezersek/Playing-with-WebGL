@@ -29,7 +29,7 @@ module.exports = {
   },
   resolve: {
     plugins: [new TsconfigPathsPlugin({ configFile: "./tsconfig.json"})],
-    extensions: ['.tsx', '.ts', '.js'],
+    extensions: ['.tsx', '.ts', '.js', '.glsl'],
   },
   output: {
     filename: 'bundle.js',
