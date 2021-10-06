@@ -1,5 +1,15 @@
 import test from 'test';
 
-import shader from './shader.glsl'
+import shader from 'shaders/fragment.glsl'
 
-console.log(shader);
+
+function main(){
+	console.log(shader);
+
+	// create canvas
+	let c = document.createElement("canvas");
+	let gl = c.getContext("webgl");
+	
+}
+
+window.onload = main;
