@@ -20,6 +20,7 @@
     "webpack-dev-server": "^4.3.1"
   },
   "dependencies": {
-    "@types/webgl-ext": "0.0.32"
+    "@types/webgl-ext": "0.0.32",
+    "gl-matrix": "^3.4.3"
   }
 }

@@ -6,5 +6,5 @@ uniform vec4 uColor;
 uniform float uTime;
 
 void main(){
-	gl_FragColor = vec4(gl_FragCoord.x/uScreenSize.x, gl_FragCoord.y/uScreenSize.y, uTime/1000.0, 1.0);
+	gl_FragColor = vec4(gl_FragCoord.x/uScreenSize.x, gl_FragCoord.y/uScreenSize.y, 1, 1.0);
 }
