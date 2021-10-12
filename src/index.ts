@@ -3,7 +3,8 @@ import { mat4 } from 'gl-matrix';
 import Application from 'Application'
 
 import vertexShaderCode from 'shaders/vertex.glsl';
-import fragmentShaderCode from 'shaders/fragment.glsl';
+import fragmentShaderCodeA from 'shaders/fragment.glsl';
+import fragmentShaderCodeB from 'shaders/fragmentSolidWhite.glsl';
 
 interface ProgramInfo {
 	program: WebGLProgram;
@@ -13,15 +14,18 @@ interface ProgramInfo {
 	uniformLocations: {
 		projectionMatrix: WebGLUniformLocation | null,
 		modelViewMatrix: WebGLUniformLocation | null,
+		screenSize: WebGLUniformLocation | null,
 	},
 }
 
 interface Buffers {
 	position: WebGLBuffer;
+	positionB: WebGLBuffer;
 }
 
 class App extends Application{
-	programInfo: ProgramInfo;
+	programInfoA: ProgramInfo;
+	programInfoB: ProgramInfo;
 	buffers: Buffers;
 	projectionMatrix = mat4.create();
 	modelViewMatrix = mat4.create();
@@ -29,27 +33,10 @@ class App extends Application{
 	constructor(canvas: HTMLCanvasElement) {
 		super(canvas);
 		
-		this.programInfo = this.initShaderProgram(vertexShaderCode, fragmentShaderCode);
+		this.programInfoA = this.initShaderProgram(vertexShaderCode, fragmentShaderCodeA);
+		this.programInfoB = this.initShaderProgram(vertexShaderCode, fragmentShaderCodeB);
 
 		this.buffers = this.initBuffers();
-
-		const numComponents = 3;
-		const type = this.gl.FLOAT;
-		const normalize = false;
-		const stride = 0;
-		const offset = 0;
-		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
-		this.gl.vertexAttribPointer(
-			this.programInfo.attribLocations.vertexPosition,
-			numComponents,
-			type,
-			normalize,
-			stride,
-			offset
-		);
-		this.gl.enableVertexAttribArray(this.programInfo.attribLocations.vertexPosition);
-
-		this.gl.useProgram(this.programInfo.program);
 	}
 
 	update(delta: number, t: number) : void {
@@ -59,6 +46,59 @@ class App extends Application{
 	render(delta: number, t: number): void {
 		const offset = 0;
 		const vertexCount = 4;
+
+		// draw with program A
+		this.gl.useProgram(this.programInfoA.program);
+		
+		// set vertex attrib buffer
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+		this.gl.vertexAttribPointer(
+			this.programInfoA.attribLocations.vertexPosition,
+			3, // num compenents
+			this.gl.FLOAT, // type
+			false, // normalize
+			0, // stride
+			0 // offset
+		);
+		this.gl.enableVertexAttribArray(this.programInfoA.attribLocations.vertexPosition);
+
+		mat4.identity(this.modelViewMatrix);
+		mat4.translate(this.modelViewMatrix, this.modelViewMatrix, [-0.0, 0.0, -6.0]);
+		this.gl.uniformMatrix4fv( // NOTICE: uniform location must be from currently selected program !!!
+			this.programInfoA.uniformLocations.modelViewMatrix,
+			false,
+			this.modelViewMatrix
+		);
+
+		this.gl.drawArrays(this.gl.TRIANGLE_STRIP, offset, vertexCount);
+
+
+
+		// draw with program B
+		this.gl.useProgram(this.programInfoB.program);
+
+		// set vertex attrib buffer
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.positionB);
+		this.gl.vertexAttribPointer(
+			this.programInfoA.attribLocations.vertexPosition,
+			3, // num compenents
+			this.gl.FLOAT, // type
+			false, // normalize
+			0, // stride
+			0 // offset
+		);
+		this.gl.enableVertexAttribArray(this.programInfoB.attribLocations.vertexPosition);
+
+		mat4.identity(this.modelViewMatrix);
+		mat4.translate(this.modelViewMatrix, this.modelViewMatrix, [-0.0, 0.0, -5.0]);
+		//mat4.rotateY(this.modelViewMatrix, this.modelViewMatrix, -Math.PI/4);
+		//mat4.rotateZ(this.modelViewMatrix, this.modelViewMatrix, -Math.PI/8);
+		this.gl.uniformMatrix4fv(
+			this.programInfoB.uniformLocations.modelViewMatrix,
+			false,
+			this.modelViewMatrix
+		);
+
 		this.gl.drawArrays(this.gl.TRIANGLE_STRIP, offset, vertexCount);
 	}
 	resize(width: number, height: number): void {
@@ -70,19 +110,27 @@ class App extends Application{
 		this.projectionMatrix = mat4.create();
 		mat4.perspective(this.projectionMatrix, fieldOfView, aspect, zNear, zFar);
 
-		this.modelViewMatrix = mat4.create();
-		mat4.translate(this.modelViewMatrix, this.modelViewMatrix, [-0.0, 0.0, -6.0]);
+		// set uniforms for program A
+		this.gl.useProgram(this.programInfoA.program);
 
-		this.gl.uniformMatrix4fv(
-			this.programInfo.uniformLocations.projectionMatrix,
+		this.gl.uniformMatrix4fv( // NOTICE: program remembers uniforms even beetwen switching
+			this.programInfoA.uniformLocations.projectionMatrix,
 			false,
 			this.projectionMatrix
 		);
+
+		this.gl.uniform2f(this.programInfoA.uniformLocations.screenSize, width, height);
+
+		// set uniforms for program B
+		this.gl.useProgram(this.programInfoB.program);
+
 		this.gl.uniformMatrix4fv(
-			this.programInfo.uniformLocations.modelViewMatrix,
+			this.programInfoB.uniformLocations.projectionMatrix,
 			false,
-			this.modelViewMatrix
+			this.projectionMatrix
 		);
+
+		this.gl.uniform2f(this.programInfoB.uniformLocations.screenSize, width, height);
 	}
 
 	private initShaderProgram(vertexShaderCode: string, fragmentShaderCode: string) : ProgramInfo{
@@ -111,37 +159,49 @@ class App extends Application{
 			uniformLocations: {
 				projectionMatrix: this.gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
 				modelViewMatrix: this.gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
+				screenSize: this.gl.getUniformLocation(shaderProgram, 'uScreenSize'),
 			},
 		};
 	}
 
 	private initBuffers() : Buffers {
-		// Create a buffer for the square's positions.
 		const positionBuffer = this.gl.createBuffer();
 	
 		if(!positionBuffer) throw "Unable to create positon buffer.";
-	
-		// Select the positionBuffer as the one to apply buffer
-		// operations to from here out.
-		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
-	
-		// Now create an array of positions for the square.
+
 		const positions = [
-			1.0,  1.0, -1,
+			1.0,  1.0, 1,
 			-1.0,  1.0, 1,
-			1.0, -1.0, -1,
+			1.0, -1.0, 1,
 			-1.0, -1.0, 1,
 		];
-	
-		// Now pass the list of positions into WebGL to build the
-		// shape. We do this by creating a Float32Array from the
-		// JavaScript array, then use it to fill the current buffer.
+		
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
 		this.gl.bufferData(this.gl.ARRAY_BUFFER,
 						new Float32Array(positions),
+						this.gl.STATIC_DRAW);
+
+
+		// make the other buffer
+		const positionBufferB = this.gl.createBuffer();
+	
+		if(!positionBufferB) throw "Unable to create positon buffer.";
+
+		const positionsB = [
+			0.0,  1.0, 1,
+			-1.0,  1.0, 1,
+			1.0, -1.0, 1,
+			-1.0, -0.0, 1,
+		];
+		
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBufferB);
+		this.gl.bufferData(this.gl.ARRAY_BUFFER,
+						new Float32Array(positionsB),
 						this.gl.STATIC_DRAW);
 	
 		return {
 			position: positionBuffer,
+			positionB: positionBufferB,
 		};
 	}
 

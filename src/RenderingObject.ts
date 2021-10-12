@@ -1,9 +1,13 @@
-abstract class RenderingObject{
-	constructor(private gl: WebGL2RenderingContext){
+class RenderingObject{
+	constructor(){
+
+	}
+
+	initBuffers(gl: WebGL2RenderingContext){
 		
 	}
 
-	abstract initBuffers() : void;
+	render(){
 
-	abstract render() : void;
+	}
 }
