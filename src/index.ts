@@ -1,168 +1,10 @@
-import {glMatrix, vec3, mat4} from 'gl-matrix';
+import { mat4 } from 'gl-matrix';
+
+import Application from 'Application'
+
 import vertexShaderCode from 'shaders/vertex.glsl';
 import fragmentShaderCode from 'shaders/fragment.glsl';
-import WebGLw from 'WebGLw';
 
-// create canvas
-let canvas = document.createElement("canvas");
-
-function main(){
-	resize();
-
-	document.body.appendChild(canvas);
-
-	document.body.style.margin = "0px";
-	document.body.style.overflow = "hidden";
-	
-	const gl = canvas.getContext("webgl");
-
-	if(!gl){
-		throw "Unable to initalize WebGL.";
-	}
-
-	const programInfo = initShaderProgram(gl, vertexShaderCode, fragmentShaderCode);
-
-	const buffers = initBuffers(gl);
-
-	
-	function tick(t: number){
-		if(!gl) return;
-		drawScene(gl, programInfo, buffers);
-		window.requestAnimationFrame(tick);
-	}
-
-	tick(0);
-}
-
-//
-// Draw the scene.
-//
-function drawScene(gl: WebGLRenderingContext, programInfo: ProgramInfo, buffers: Buffers) {
-	gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-
-	gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
-	gl.clearDepth(1.0);                 // Clear everything
-	gl.enable(gl.DEPTH_TEST);           // Enable depth testing
-	gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
-
-	// Clear the canvas before we start drawing on it.
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-	// Create a perspective matrix, a special matrix that is
-	// used to simulate the distortion of perspective in a camera.
-	// Our field of view is 45 degrees, with a width/height
-	// ratio that matches the display size of the canvas
-	// and we only want to see objects between 0.1 units
-	// and 100 units away from the camera.
-	const fieldOfView = 45 * Math.PI / 180;   // in radians
-	const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-	const zNear = 0.1;
-	const zFar = 100.0;
-	const projectionMatrix = mat4.create();
-
-	// note: glmatrix.js always has the first argument
-	// as the destination to receive the result.
-	mat4.perspective(projectionMatrix,
-						fieldOfView,
-						aspect,
-						zNear,
-						zFar);
-
-	// Set the drawing position to the "identity" point, which is
-	// the center of the scene.
-	const modelViewMatrix = mat4.create();
-
-	// Now move the drawing position a bit to where we want to
-	// start drawing the square.
-	mat4.translate(modelViewMatrix,     // destination matrix
-					modelViewMatrix,     // matrix to translate
-					[-0.0, 0.0, -6.0]);  // amount to translate
-
-	// Tell WebGL how to pull out the positions from the position
-	// buffer into the vertexPosition attribute.
-	{
-		const numComponents = 2;
-		const type = gl.FLOAT;
-		const normalize = false;
-		const stride = 0;
-		const offset = 0;
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-		gl.vertexAttribPointer(
-			programInfo.attribLocations.vertexPosition,
-			numComponents,
-			type,
-			normalize,
-			stride,
-			offset);
-		gl.enableVertexAttribArray(
-			programInfo.attribLocations.vertexPosition);
-	}
-
-	// Tell WebGL to use our program when drawing
-
-	gl.useProgram(programInfo.program);
-
-	// Set the shader uniforms
-
-	gl.uniformMatrix4fv(
-		programInfo.uniformLocations.projectionMatrix,
-		false,
-		projectionMatrix);
-	gl.uniformMatrix4fv(
-		programInfo.uniformLocations.modelViewMatrix,
-		false,
-		modelViewMatrix);
-
-	{
-		const offset = 0;
-		const vertexCount = 4;
-		gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
-	}
-}
-
-
-//
-// initBuffers
-//
-// Initialize the buffers we'll need. For this demo, we just
-// have one object -- a simple two-dimensional square.
-//
-interface Buffers {
-	position: WebGLBuffer;
-}
-function initBuffers(gl: WebGLRenderingContext) : Buffers {
-	// Create a buffer for the square's positions.
-	const positionBuffer = gl.createBuffer();
-
-	if(!positionBuffer) throw "Unable to create positon buffer.";
-
-	// Select the positionBuffer as the one to apply buffer
-	// operations to from here out.
-	gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-
-	// Now create an array of positions for the square.
-	const positions = [
-		1.0,  1.0,
-		-1.0,  1.0,
-		1.0, -1.0,
-		-1.0, -1.0,
-	];
-
-	// Now pass the list of positions into WebGL to build the
-	// shape. We do this by creating a Float32Array from the
-	// JavaScript array, then use it to fill the current buffer.
-	gl.bufferData(gl.ARRAY_BUFFER,
-					new Float32Array(positions),
-					gl.STATIC_DRAW);
-
-	return {
-		position: positionBuffer,
-	};
-}
-
-//
-// Initialize a shader program, so WebGL knows how to draw our data
-//
 interface ProgramInfo {
 	program: WebGLProgram;
 	attribLocations: {
@@ -173,63 +15,162 @@ interface ProgramInfo {
 		modelViewMatrix: WebGLUniformLocation | null,
 	},
 }
-function initShaderProgram(gl: WebGLRenderingContext, vsSource: string, fsSource: string) : ProgramInfo {
-	const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
-	const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
-	// Create the shader program
-	const shaderProgram = gl.createProgram();
-	if(!shaderProgram) throw "Unable to initialize the shader program.";
+interface Buffers {
+	position: WebGLBuffer;
+}
 
-	gl.attachShader(shaderProgram, vertexShader);
-	gl.attachShader(shaderProgram, fragmentShader);
-	gl.linkProgram(shaderProgram);
+class App extends Application{
+	programInfo: ProgramInfo;
+	buffers: Buffers;
+	projectionMatrix = mat4.create();
+	modelViewMatrix = mat4.create();
 
-	// If creating the shader program failed, alert
-	if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-		throw 'Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram);
+	constructor(canvas: HTMLCanvasElement) {
+		super(canvas);
+		
+		this.programInfo = this.initShaderProgram(vertexShaderCode, fragmentShaderCode);
+
+		this.buffers = this.initBuffers();
+
+		const numComponents = 3;
+		const type = this.gl.FLOAT;
+		const normalize = false;
+		const stride = 0;
+		const offset = 0;
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+		this.gl.vertexAttribPointer(
+			this.programInfo.attribLocations.vertexPosition,
+			numComponents,
+			type,
+			normalize,
+			stride,
+			offset
+		);
+		this.gl.enableVertexAttribArray(this.programInfo.attribLocations.vertexPosition);
+
+		this.gl.useProgram(this.programInfo.program);
 	}
 
-	return {
-		program: shaderProgram,
-		attribLocations: {
-			vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
-		},
-		uniformLocations: {
-			projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
-			modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
-		},
-	};
-}
-
-//
-// creates a shader of the given type, uploads the source and
-// compiles it.
-//
-function loadShader(gl: WebGLRenderingContext, type: number, source: string) {
-	const shader = gl.createShader(type);
-	if(!shader) throw "Unable to create shader.";
-
-	// Send the source to the shader object
-	gl.shaderSource(shader, source);
-
-	// Compile the shader program
-	gl.compileShader(shader);
-
-	// See if it compiled successfully
-	if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-		gl.deleteShader(shader);
-		throw 'An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader);
+	update(delta: number, t: number) : void {
+	
 	}
 
-	return shader;
+	render(delta: number, t: number): void {
+		const offset = 0;
+		const vertexCount = 4;
+		this.gl.drawArrays(this.gl.TRIANGLE_STRIP, offset, vertexCount);
+	}
+	resize(width: number, height: number): void {
+		const fieldOfView = 45 * Math.PI / 180; 
+		const aspect = width / height;
+		const zNear = 0.1;
+		const zFar = 100.0;
+
+		this.projectionMatrix = mat4.create();
+		mat4.perspective(this.projectionMatrix, fieldOfView, aspect, zNear, zFar);
+
+		this.modelViewMatrix = mat4.create();
+		mat4.translate(this.modelViewMatrix, this.modelViewMatrix, [-0.0, 0.0, -6.0]);
+
+		this.gl.uniformMatrix4fv(
+			this.programInfo.uniformLocations.projectionMatrix,
+			false,
+			this.projectionMatrix
+		);
+		this.gl.uniformMatrix4fv(
+			this.programInfo.uniformLocations.modelViewMatrix,
+			false,
+			this.modelViewMatrix
+		);
+	}
+
+	private initShaderProgram(vertexShaderCode: string, fragmentShaderCode: string) : ProgramInfo{
+		// Init shader program
+		const vertexShader = this.loadShader(this.gl.VERTEX_SHADER, vertexShaderCode);
+		const fragmentShader = this.loadShader(this.gl.FRAGMENT_SHADER, fragmentShaderCode);
+
+		// Create the shader program
+		const shaderProgram = this.gl.createProgram();
+		if(!shaderProgram) throw "Unable to initialize the shader program.";
+
+		this.gl.attachShader(shaderProgram, vertexShader);
+		this.gl.attachShader(shaderProgram, fragmentShader);
+		this.gl.linkProgram(shaderProgram);
+
+		// If creating the shader program failed, alert
+		if (!this.gl.getProgramParameter(shaderProgram, this.gl.LINK_STATUS)) {
+			throw 'Unable to initialize the shader program: ' + this.gl.getProgramInfoLog(shaderProgram);
+		}
+
+		return {
+			program: shaderProgram,
+			attribLocations: {
+				vertexPosition: this.gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
+			},
+			uniformLocations: {
+				projectionMatrix: this.gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
+				modelViewMatrix: this.gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
+			},
+		};
+	}
+
+	private initBuffers() : Buffers {
+		// Create a buffer for the square's positions.
+		const positionBuffer = this.gl.createBuffer();
+	
+		if(!positionBuffer) throw "Unable to create positon buffer.";
+	
+		// Select the positionBuffer as the one to apply buffer
+		// operations to from here out.
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
+	
+		// Now create an array of positions for the square.
+		const positions = [
+			1.0,  1.0, -1,
+			-1.0,  1.0, 1,
+			1.0, -1.0, -1,
+			-1.0, -1.0, 1,
+		];
+	
+		// Now pass the list of positions into WebGL to build the
+		// shape. We do this by creating a Float32Array from the
+		// JavaScript array, then use it to fill the current buffer.
+		this.gl.bufferData(this.gl.ARRAY_BUFFER,
+						new Float32Array(positions),
+						this.gl.STATIC_DRAW);
+	
+		return {
+			position: positionBuffer,
+		};
+	}
+
+	private loadShader(type: number, source: string) {
+		const shader = this.gl.createShader(type);
+		if(!shader) throw "Unable to create shader.";
+	
+		// Send the source to the shader object
+		this.gl.shaderSource(shader, source);
+	
+		// Compile the shader program
+		this.gl.compileShader(shader);
+	
+		// See if it compiled successfully
+		if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+			this.gl.deleteShader(shader);
+			throw 'An error occurred compiling the shaders: ' + this.gl.getShaderInfoLog(shader);
+		}
+	
+		return shader;
+	}
 }
 
-function resize(){
-	canvas.width = window.innerWidth;
-	canvas.height = window.innerHeight;
-}
+document.addEventListener('DOMContentLoaded', () => {
+	let canvas = document.createElement("canvas");
+	document.body.appendChild(canvas);
+	document.body.style.margin = "0px";
+	document.body.style.overflow = "hidden";
+    const app = new App(canvas);
 
-
-window.onresize = resize;
-window.onload = main;
+	app.start();
+});
