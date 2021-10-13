@@ -30,6 +30,8 @@ class App extends Application{
 	buffers: Buffers;
 	projectionMatrix = mat4.create();
 	modelViewMatrix = mat4.create();
+	vaoSquare: WebGLVertexArrayObject;
+	vaoDeltoid: WebGLVertexArrayObject;
 
 	constructor(canvas: HTMLCanvasElement) {
 		super(canvas);
@@ -37,6 +39,16 @@ class App extends Application{
 		this.programInfoA = new Shader(this.gl, vertexShaderCode, fragmentShaderCodeA);
 		this.programInfoB = new Shader(this.gl, vertexShaderCode, fragmentShaderCodeB);
 
+		
+		// create vertex array object
+		let vao = this.gl.createVertexArray();
+		if(!vao) throw "Can't create vertex array object.";
+		this.vaoSquare = vao;
+		
+		vao = this.gl.createVertexArray();
+		if(!vao) throw "Can't create vertex array object.";
+		this.vaoDeltoid = vao;
+		
 		this.buffers = this.initBuffers();
 
 		console.log(this.programInfoA.getAttributeLocation('aVertexPosition'), this.programInfoB.getAttributeLocation('aVertexPosition')); 
@@ -59,17 +71,7 @@ class App extends Application{
 		this.programInfoA.enable();
 		this.programInfoA.setUniformMatrixFloat('uModelViewMatrix', this.modelViewMatrix);		
 			
-		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
-		
-		this.gl.enableVertexAttribArray(0);
-		this.gl.vertexAttribPointer(
-			0, // this.programInfoA.getAttributeLocation('aVertexPosition'),
-			3, // num compenents
-			this.gl.FLOAT, // type
-			false, // normalize
-			0, // stride
-			0 // offset
-		);
+		this.gl.bindVertexArray(this.vaoSquare);
 		this.gl.drawArrays(this.gl.TRIANGLE_STRIP, offset, vertexCount);
 
 		
@@ -82,16 +84,7 @@ class App extends Application{
 		this.programInfoB.enable();
 		this.programInfoB.setUniformMatrixFloat('uModelViewMatrix', this.modelViewMatrix);
 		
-		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.positionB);
-		this.gl.enableVertexAttribArray(0);
-		this.gl.vertexAttribPointer(
-			0, // this.programInfoA.getAttributeLocation('aVertexPosition'),
-			3, // num compenents
-			this.gl.FLOAT, // type
-			false, // normalize
-			0, // stride
-			0 // offset
-		);
+		this.gl.bindVertexArray(this.vaoDeltoid);
 		this.gl.drawArraysInstanced(this.gl.TRIANGLE_STRIP, offset, vertexCount, 100);
 	}
 	resize(width: number, height: number): void {
@@ -147,10 +140,13 @@ class App extends Application{
 	}
 
 	private initBuffers() : Buffers {
-		const positionBuffer = this.gl.createBuffer();
-	
-		if(!positionBuffer) throw "Unable to create positon buffer.";
 
+		this.gl.bindVertexArray(this.vaoSquare);
+		
+		const positionBuffer = this.gl.createBuffer();
+		
+		if(!positionBuffer) throw "Unable to create positon buffer.";
+		
 		const positions = [
 			1.0,  1.0, 1,
 			-1.0,  1.0, 1,
@@ -160,7 +156,7 @@ class App extends Application{
 		
 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
 		this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.STATIC_DRAW);
-
+		
 		this.gl.enableVertexAttribArray(0);//this.gl.enableVertexAttribArray(this.programInfoA.getAttributeLocation('aVertexPosition'));
 		this.gl.vertexAttribPointer(
 			0, // this.programInfoA.getAttributeLocation('aVertexPosition'),
@@ -170,9 +166,10 @@ class App extends Application{
 			0, // stride
 			0 // offset
 		);
-
-
+			
+			
 		// make the other buffer
+		this.gl.bindVertexArray(this.vaoDeltoid);
 		const positionBufferB = this.gl.createBuffer();
 	
 		if(!positionBufferB) throw "Unable to create positon buffer.";
