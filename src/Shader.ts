@@ -1,9 +1,13 @@
+import WebGLw from "WebGLw";
 export default class Shader{
-	vertexShader: WebGLShader;
-	fragmentShader: WebGLShader;
-	program: WebGLProgram;
-	uniformLocationCache: Map<string, WebGLUniformLocation | null> = new Map();
-	constructor(private gl: WebGL2RenderingContext, private vertexCode: string, private fragmentCode: string){
+	private vertexShader: WebGLShader;
+	private fragmentShader: WebGLShader;
+	private program: WebGLProgram;
+	private uniformLocationCache: Map<string, WebGLUniformLocation | null> = new Map();
+	private gl: WebGL2RenderingContext;
+	constructor(private w: WebGLw, private vertexCode: string, private fragmentCode: string){
+		this.gl = w.gl;
+
 		this.vertexShader = this.loadShader(this.gl.VERTEX_SHADER, vertexCode);
 		this.fragmentShader = this.loadShader(this.gl.FRAGMENT_SHADER, fragmentCode);
 

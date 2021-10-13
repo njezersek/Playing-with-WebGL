@@ -20,11 +20,10 @@ class App extends Application{
 	constructor(canvas: HTMLCanvasElement) {
 		super(canvas);
 		
-		this.programInfoA = new Shader(this.gl, vertexShaderCode, fragmentShaderCodeA);
-		this.programInfoB = new Shader(this.gl, vertexShaderCode, fragmentShaderCodeB);
+		this.programInfoA = new Shader(this.w, vertexShaderCode, fragmentShaderCodeA);
+		this.programInfoB = new Shader(this.w, vertexShaderCode, fragmentShaderCodeB);
 
-
-		this.vaoSquare = new VertexArray(this.gl);
+		this.vaoSquare = new VertexArray(this.w);
 		this.vaoSquare.addVertexBuffer(
 			this.programInfoA.getAttributeLocation('aVertexPosition'),
 			new Float32Array([1, 1, -1, 1, 1, 1, 1, -1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, -1, -1, -1, 1, -1, 1, 1, 1, 1, 1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, 1, -1, 1, -1, -1, 1, 1, 1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1, -1, 1, -1, 1, 1, -1, 1, -1, -1, -1, -1, -1,]),
@@ -42,7 +41,7 @@ class App extends Application{
 		);
 		this.vaoSquare.setIndexBuffer(new Uint16Array([0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23,],));
 		
-		this.vaoDeltoid = new VertexArray(this.gl);
+		this.vaoDeltoid = new VertexArray(this.w);
 		this.vaoDeltoid.addVertexBuffer(
 			this.programInfoB.getAttributeLocation('aVertexPosition'),
 			new Float32Array([
@@ -79,7 +78,8 @@ class App extends Application{
 		this.programInfoA.setUniformMatrixFloat('uViewMatrix', this.viewMatrix);		
 
 		mat4.identity(this.modelMatrix);
-		mat4.translate(this.modelMatrix, this.modelMatrix, [-0.0, 0.0, -7.0]);
+		mat4.translate(this.modelMatrix, this.modelMatrix, [-0.0, 0.0, -9.0]);
+		mat4.scale(this.modelMatrix, this.modelMatrix, new Float32Array([2,2,2]))
 		
 		this.programInfoB.enable();
 		this.programInfoB.setUniformMatrixFloat('uModelMatrix', this.modelMatrix);
@@ -88,15 +88,16 @@ class App extends Application{
 	}
 
 	render(delta: number, t: number): void {
+		//console.log(1000/delta);
 		// draw with program A
 		this.programInfoA.enable();
 		this.vaoSquare.enable();
-		this.gl.drawElements(this.gl.TRIANGLES, this.vaoSquare.numIndices, this.gl.UNSIGNED_SHORT, 0);
+		this.gl.drawElements(this.gl.TRIANGLES, this.vaoSquare.getNumIndcies(), this.gl.UNSIGNED_SHORT, 0);
 		
 		// draw with program B
 		this.programInfoB.enable();
 		this.vaoDeltoid.enable();
-		this.gl.drawArraysInstanced(this.gl.TRIANGLE_STRIP, 0, this.vaoDeltoid.numVertecies, 100);
+		this.gl.drawArraysInstanced(this.gl.TRIANGLE_STRIP, 0, this.vaoDeltoid.getNumVertecies(), 1);
 	}
 
 	resize(width: number, height: number): void {

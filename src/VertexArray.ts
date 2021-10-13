@@ -1,11 +1,15 @@
-export default class VertexArray{
-	vertexArrayObject: WebGLVertexArrayObject;
-	vertexBuffers: Map<number, WebGLBuffer> = new Map();
-	indexBuffer?: WebGLBuffer;
-	numIndices: number = 0;
-	numVertecies: number = 0;
+import WebGLw from "WebGLw";
 
-	constructor(private gl: WebGL2RenderingContext){
+export default class VertexArray{
+	private vertexArrayObject: WebGLVertexArrayObject;
+	private vertexBuffers: Map<number, WebGLBuffer> = new Map();
+	private indexBuffer?: WebGLBuffer;
+	private gl: WebGL2RenderingContext
+	private numIndices: number = 0;
+	private numVertecies: number = 0;
+
+	constructor(private w: WebGLw){
+		this.gl = w.gl;
 		let vao = this.gl.createVertexArray();
 		if(!vao)throw "Can't create vertex array object.";
 		this.vertexArrayObject = vao;
@@ -38,6 +42,10 @@ export default class VertexArray{
 		);
 	}
 
+	getVertexBuffer(location: number){
+		return this.vertexBuffers.get(location)
+	}
+
 	setIndexBuffer(data: Uint16Array){
 		this.enable();
 
@@ -49,5 +57,17 @@ export default class VertexArray{
 
 		this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer);
 		this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, data, this.gl.STATIC_DRAW);
+	}
+
+	getIndexBuffer(){
+		return this.indexBuffer;
+	}
+
+	getNumIndcies(){
+		return this.numIndices;
+	}
+
+	getNumVertecies(){
+		return this.numVertecies;
 	}
 }
