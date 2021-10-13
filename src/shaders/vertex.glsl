@@ -1,11 +1,19 @@
 #version 300 es
 
-layout(location = 0) in vec4 aVertexPosition;
+in vec4 aVertexPosition;
+in vec3 aVertexNormal;
+in vec2 aVertexTexcoord;
+
+out vec3 aNormal;
+out vec2 aTexcoord;
 
 uniform mat4 uProjectionMatrix;
-uniform mat4 uModelViewMatrix;
+uniform mat4 uModelMatrix;
+uniform mat4 uViewMatrix;
 
 void main() {
+	aNormal = (uModelMatrix * vec4(aVertexNormal, 0)).xyz;
+	aTexcoord = aVertexTexcoord;
 	vec4 offset = vec4(float(gl_InstanceID)/100.0,0,0,0);
-	gl_Position = uProjectionMatrix * uModelViewMatrix  * aVertexPosition + offset;
+	gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix  * aVertexPosition + offset;
 }

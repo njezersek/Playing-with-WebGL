@@ -2,6 +2,7 @@ export default class Shader{
 	vertexShader: WebGLShader;
 	fragmentShader: WebGLShader;
 	program: WebGLProgram;
+	uniformLocationCache: Map<string, WebGLUniformLocation | null> = new Map();
 	constructor(private gl: WebGL2RenderingContext, private vertexCode: string, private fragmentCode: string){
 		this.vertexShader = this.loadShader(this.gl.VERTEX_SHADER, vertexCode);
 		this.fragmentShader = this.loadShader(this.gl.FRAGMENT_SHADER, fragmentCode);
@@ -48,7 +49,7 @@ export default class Shader{
 	}
 
 	setUniformVectorFloat(name: string, data: Float32List){
-		let location = this.gl.getUniformLocation(this.program, name);
+		let location = this.getUniformLocation(name);
 
 		if(data.length == 1){
 			this.gl.uniform1fv(location, data);
@@ -65,7 +66,7 @@ export default class Shader{
 	}
 
 	setUniformMatrixFloat(name: string, data: Float32List, transpose?: boolean){
-		let location = this.gl.getUniformLocation(this.program, name);
+		let location = this.getUniformLocation(name);
 
 		if(!transpose) transpose = false;
 		if(data.length == 4){
@@ -77,6 +78,15 @@ export default class Shader{
 		else if(data.length == 16){
 			this.gl.uniformMatrix4fv(location, transpose, data);
 		}
+	}
+
+	getUniformLocation(name: string){
+		let location = this.uniformLocationCache.get(name) as WebGLUniformLocation | undefined | null;
+		if(location === undefined){
+			location = this.gl.getUniformLocation(this.program, name);
+			this.uniformLocationCache.set(name, location);
+		}
+		return location;
 	}
 
 	getAttributeLocation(name: string){

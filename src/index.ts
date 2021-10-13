@@ -7,18 +7,6 @@ import vertexShaderCode from 'shaders/vertex.glsl';
 import fragmentShaderCodeA from 'shaders/fragment.glsl';
 import fragmentShaderCodeB from 'shaders/fragmentSolidWhite.glsl';
 
-interface ProgramInfo {
-	program: WebGLProgram;
-	attribLocations: {
-		vertexPosition: number;
-	},
-	uniformLocations: {
-		projectionMatrix: WebGLUniformLocation | null,
-		modelViewMatrix: WebGLUniformLocation | null,
-		screenSize: WebGLUniformLocation | null,
-	},
-}
-
 interface Buffers {
 	position: WebGLBuffer;
 	positionB: WebGLBuffer;
@@ -29,7 +17,8 @@ class App extends Application{
 	programInfoB: Shader;
 	buffers: Buffers;
 	projectionMatrix = mat4.create();
-	modelViewMatrix = mat4.create();
+	modelMatrix = mat4.create();
+	viewMatrix = mat4.create();
 	vaoSquare: WebGLVertexArrayObject;
 	vaoDeltoid: WebGLVertexArrayObject;
 
@@ -52,37 +41,50 @@ class App extends Application{
 		this.buffers = this.initBuffers();
 
 		console.log(this.programInfoA.getAttributeLocation('aVertexPosition'), this.programInfoB.getAttributeLocation('aVertexPosition')); 
+
+		window.addEventListener("keypress", e => {
+			let speed = 0.1;
+			if(e.key == "a"){
+				console.log(e.key);
+				mat4.translate(this.viewMatrix, this.viewMatrix, [speed, 0, 0]);
+				//mat4.rotateY(this.viewMatrix, this.viewMatrix, -speed);
+			}
+			if(e.key == "d"){
+				//mat4.rotateY(this.viewMatrix, this.viewMatrix, +speed);
+				mat4.translate(this.viewMatrix, this.viewMatrix, [-speed, 0, 0]);
+			}
+		});
 	}
 
 
 	update(delta: number, t: number) : void {
-
 	}
 
 	render(delta: number, t: number): void {
 		const offset = 0;
 		const vertexCount = 4;
-
 		
 		// draw with program A
-		mat4.identity(this.modelViewMatrix);
-		mat4.translate(this.modelViewMatrix, this.modelViewMatrix, [0.0, 0.0, -6.0]);
+		mat4.identity(this.modelMatrix);
+		mat4.translate(this.modelMatrix, this.modelMatrix, [0.0, 0.0, -6.0]);
+		mat4.rotateY(this.modelMatrix, this.modelMatrix, -Math.PI/4+t/1000);
+		mat4.rotateZ(this.modelMatrix, this.modelMatrix, -Math.PI/8+t/2000);
 
 		this.programInfoA.enable();
-		this.programInfoA.setUniformMatrixFloat('uModelViewMatrix', this.modelViewMatrix);		
-			
+		this.programInfoA.setUniformMatrixFloat('uModelMatrix', this.modelMatrix);		
+		this.programInfoA.setUniformMatrixFloat('uViewMatrix', this.viewMatrix);		
+		
 		this.gl.bindVertexArray(this.vaoSquare);
-		this.gl.drawArrays(this.gl.TRIANGLE_STRIP, offset, vertexCount);
-
+		this.gl.drawElements(this.gl.TRIANGLES, 36, this.gl.UNSIGNED_SHORT, 0);
+		
 		
 		// draw with program B
-		mat4.identity(this.modelViewMatrix);
-		mat4.translate(this.modelViewMatrix, this.modelViewMatrix, [-0.0, 0.0, -5.0]);
-		//mat4.rotateY(this.modelViewMatrix, this.modelViewMatrix, -Math.PI/4);
-		//mat4.rotateZ(this.modelViewMatrix, this.modelViewMatrix, -Math.PI/8);
+		mat4.identity(this.modelMatrix);
+		mat4.translate(this.modelMatrix, this.modelMatrix, [-0.0, 0.0, -7.0]);
 		
 		this.programInfoB.enable();
-		this.programInfoB.setUniformMatrixFloat('uModelViewMatrix', this.modelViewMatrix);
+		this.programInfoB.setUniformMatrixFloat('uModelMatrix', this.modelMatrix);
+		this.programInfoB.setUniformMatrixFloat('uViewMatrix', this.viewMatrix);		
 		
 		this.gl.bindVertexArray(this.vaoDeltoid);
 		this.gl.drawArraysInstanced(this.gl.TRIANGLE_STRIP, offset, vertexCount, 100);
@@ -108,64 +110,82 @@ class App extends Application{
 
 	}
 
-	private initShaderProgram(vertexShaderCode: string, fragmentShaderCode: string) : ProgramInfo{
-		// Init shader program
-		const vertexShader = this.loadShader(this.gl.VERTEX_SHADER, vertexShaderCode);
-		const fragmentShader = this.loadShader(this.gl.FRAGMENT_SHADER, fragmentShaderCode);
-
-		// Create the shader program
-		const shaderProgram = this.gl.createProgram();
-		if(!shaderProgram) throw "Unable to initialize the shader program.";
-
-		this.gl.attachShader(shaderProgram, vertexShader);
-		this.gl.attachShader(shaderProgram, fragmentShader);
-		this.gl.linkProgram(shaderProgram);
-
-		// If creating the shader program failed, alert
-		if (!this.gl.getProgramParameter(shaderProgram, this.gl.LINK_STATUS)) {
-			throw 'Unable to initialize the shader program: ' + this.gl.getProgramInfoLog(shaderProgram);
-		}
-
-		return {
-			program: shaderProgram,
-			attribLocations: {
-				vertexPosition: this.gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
-			},
-			uniformLocations: {
-				projectionMatrix: this.gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
-				modelViewMatrix: this.gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
-				screenSize: this.gl.getUniformLocation(shaderProgram, 'uScreenSize'),
-			},
-		};
-	}
-
 	private initBuffers() : Buffers {
 
 		this.gl.bindVertexArray(this.vaoSquare);
 		
 		const positionBuffer = this.gl.createBuffer();
-		
 		if(!positionBuffer) throw "Unable to create positon buffer.";
 		
-		const positions = [
-			1.0,  1.0, 1,
-			-1.0,  1.0, 1,
-			1.0, -1.0, 1,
-			-1.0, -1.0, 1,
-		];
+		const normalBuffer = this.gl.createBuffer();
+		if(!normalBuffer) throw "Unable to create normal buffer.";
+
+		const texcoordBuffer = this.gl.createBuffer();
+		if(!texcoordBuffer) throw "Unable to create texcoord buffer.";
+		
+		const indexBuffer = this.gl.createBuffer();
+		if(!indexBuffer) throw "Unable to create index buffer.";
+		
+		// vertex positions for a cube
+		const cubeVertexPositions = new Float32Array([
+			1, 1, -1, 1, 1, 1, 1, -1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, -1, -1, -1, 1, -1, 1, 1, 1, 1, 1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, 1, -1, 1, -1, -1, 1, 1, 1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1, -1, 1, -1, 1, 1, -1, 1, -1, -1, -1, -1, -1,
+		]);
+		// vertex normals for a cube
+		const cubeVertexNormals = new Float32Array([
+			1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1,
+		]);
+		// vertex texture coordinates for a cube
+		const cubeVertexTexcoords = new Float32Array([
+			1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1,
+		]);
+		// vertex indices for the triangles of a cube
+		// the data above defines 24 vertices. We need to draw 12
+		// triangles, 2 for each size, each triangle needs
+		// 3 vertices so 12 * 3 = 36
+		const cubeVertexIndices = new Uint16Array([
+			0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23,
+		],);
 		
 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
-		this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.STATIC_DRAW);
-		
-		this.gl.enableVertexAttribArray(0);//this.gl.enableVertexAttribArray(this.programInfoA.getAttributeLocation('aVertexPosition'));
+		this.gl.bufferData(this.gl.ARRAY_BUFFER, cubeVertexPositions, this.gl.STATIC_DRAW);
+		this.gl.enableVertexAttribArray(this.programInfoA.getAttributeLocation('aVertexPosition'));
 		this.gl.vertexAttribPointer(
-			0, // this.programInfoA.getAttributeLocation('aVertexPosition'),
+			this.programInfoA.getAttributeLocation('aVertexPosition'),
 			3, // num compenents
 			this.gl.FLOAT, // type
 			false, // normalize
 			0, // stride
 			0 // offset
 		);
+
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, normalBuffer);
+		this.gl.bufferData(this.gl.ARRAY_BUFFER, cubeVertexNormals, this.gl.STATIC_DRAW);
+		this.gl.enableVertexAttribArray(this.programInfoA.getAttributeLocation('aVertexNormal'));
+		this.gl.vertexAttribPointer(
+			this.programInfoA.getAttributeLocation('aVertexNormal'),
+			3, // num compenents
+			this.gl.FLOAT, // type
+			false, // normalize
+			0, // stride
+			0 // offset
+		);
+
+		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, texcoordBuffer);
+		this.gl.bufferData(this.gl.ARRAY_BUFFER, cubeVertexTexcoords, this.gl.STATIC_DRAW);
+		this.gl.enableVertexAttribArray(this.programInfoA.getAttributeLocation('aVertexTexcoord'));
+		this.gl.vertexAttribPointer(
+			this.programInfoA.getAttributeLocation('aVertexTexcoord'),
+			2, // num compenents
+			this.gl.FLOAT, // type
+			false, // normalize
+			0, // stride
+			0 // offset
+		);
+
+		this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+		this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndices, this.gl.STATIC_DRAW);
+		
+
 			
 			
 		// make the other buffer
