@@ -43,9 +43,9 @@ export default class Cube{
 		this.vertexArray.enable();
 
 		mat4.identity(this.modelMatrix);
-		mat4.translate(this.modelMatrix, this.modelMatrix, [0.0, 0.0, -6.0]);
-		mat4.rotateY(this.modelMatrix, this.modelMatrix, -Math.PI/4-t/1000);
-		mat4.rotateZ(this.modelMatrix, this.modelMatrix, -Math.PI/8+t/2000);
+		mat4.translate(this.modelMatrix, this.modelMatrix, [0.0, Math.sin(t/1000)*0, -6.0]);
+		//mat4.rotateY(this.modelMatrix, this.modelMatrix, -Math.PI/4-t/1000);
+		//mat4.rotateZ(this.modelMatrix, this.modelMatrix, -Math.PI/8+t/2000);
 
 		this.program.enable();
 		this.program.setUniformMatrixFloat('uModelMatrix', this.modelMatrix);		

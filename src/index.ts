@@ -1,4 +1,4 @@
-import { mat4 } from 'gl-matrix';
+import { mat4, vec3, quat } from 'gl-matrix';
 
 import Application from 'Application'
 import Shader from 'Shader';
@@ -9,6 +9,57 @@ import vertexShaderCode from 'shaders/vertex.glsl';
 import fragmentShaderCodeA from 'shaders/fragment.glsl';
 import fragmentShaderCodeB from 'shaders/fragmentSolidWhite.glsl';
 
+class Camera{
+	private _horizontalAngle = 0;
+	private _verticalAngle = 0;
+	public forwardVelocity = 0;
+	public sidewaysVelocity = 0;
+	public verticalVelocity = 0;
+	pos = vec3.fromValues(0,0,0);
+
+	public update(dt: number, t: number){
+		let cameraDirMat = mat4.create();
+		mat4.rotateY(cameraDirMat, cameraDirMat, -this.horizontalAngle);
+		//mat4.rotateX(cameraDirMat, cameraDirMat, -this.verticalAngle);
+		let cameraDir = vec3.fromValues(0,0,1);	
+		let up = vec3.fromValues(0,1,0);
+		let sideways = vec3.create();
+		vec3.transformMat4(cameraDir, cameraDir, cameraDirMat);
+		vec3.normalize(cameraDir, cameraDir);
+		
+		vec3.cross(sideways, cameraDir, up);
+		vec3.normalize(sideways, sideways);
+
+		vec3.scale(cameraDir, cameraDir, this.forwardVelocity * 0.1);
+		vec3.add(this.pos, this.pos, cameraDir);
+
+		vec3.scale(sideways, sideways, this.sidewaysVelocity * 0.1);
+		vec3.add(this.pos, this.pos, sideways);
+
+		vec3.scale(up, up, this.verticalVelocity * -0.1);
+		vec3.add(this.pos, this.pos, up);
+	}
+
+	get horizontalAngle(){
+		return this._horizontalAngle;
+	}
+
+	set horizontalAngle(angle: number){
+		const k = 2*Math.PI;
+		this._horizontalAngle = (angle % k + k) % k;
+	}
+
+	get verticalAngle(){
+		return this._verticalAngle;
+	}
+
+	set verticalAngle(angle: number){
+		if(angle > Math.PI/2) angle = Math.PI/2;
+		if(angle < -Math.PI/2) angle = -Math.PI/2;
+		this._verticalAngle = angle;
+	}
+}
+
 class App extends Application{
 	programInfoA: Shader;
 	programInfoB: Shader;
@@ -18,6 +69,7 @@ class App extends Application{
 	vaoSquare: VertexArray;
 	vaoDeltoid: VertexArray;
 	cube: Cube;
+	camera = new Camera();
 
 	constructor(canvas: HTMLCanvasElement) {
 		super(canvas);
@@ -56,22 +108,32 @@ class App extends Application{
 		);
 
 		this.cube = new Cube(this.w);
-
-		window.addEventListener("keypress", e => {
-			let speed = 0.1;
-			if(e.key == "a"){
-				console.log(e.key);
-				mat4.translate(this.viewMatrix, this.viewMatrix, [speed, 0, 0]);
-				//mat4.rotateY(this.viewMatrix, this.viewMatrix, -speed);
-			}
-			if(e.key == "d"){
-				//mat4.rotateY(this.viewMatrix, this.viewMatrix, +speed);
-				mat4.translate(this.viewMatrix, this.viewMatrix, [-speed, 0, 0]);
-			}
-		});
 	}
 
-	update(delta: number, t: number) : void {
+	onMouseMove(e: MouseEvent){
+		const mouseSpeed = 0.001;
+
+		this.camera.horizontalAngle += e.movementX * mouseSpeed;
+		this.camera.verticalAngle += e.movementY * mouseSpeed;
+		
+	}
+
+	onKeyDown(e: KeyboardEvent) {
+		if(e.key == 'w') this.camera.forwardVelocity = 1;
+		if(e.key == 's') this.camera.forwardVelocity = -1;
+		if(e.key == 'a') this.camera.sidewaysVelocity = -1;
+		if(e.key == 'd') this.camera.sidewaysVelocity = 1;
+		if(e.key == 'Shift') this.camera.verticalVelocity = -1;
+		if(e.key == ' ') this.camera.verticalVelocity = 1;
+	}
+	
+	onKeyUp(e: KeyboardEvent) {
+		if(e.key == 'w' || e.key == 's') this.camera.forwardVelocity = 0;
+		if(e.key == 'a' || e.key == 'd') this.camera.sidewaysVelocity = 0;
+		if(e.key == 'Shift' || e.key == ' ') this.camera.verticalVelocity = 0;
+	}
+
+	update(dt: number, t: number) : void {
 		mat4.identity(this.modelMatrix);
 		mat4.translate(this.modelMatrix, this.modelMatrix, [3.0, 0.0, -10.0]);
 		mat4.rotateY(this.modelMatrix, this.modelMatrix, -Math.PI/4+t/1000);
@@ -87,7 +149,15 @@ class App extends Application{
 		
 		this.programInfoB.enable();
 		this.programInfoB.setUniformMatrixFloat('uModelMatrix', this.modelMatrix);
-		this.programInfoB.setUniformMatrixFloat('uViewMatrix', this.viewMatrix);		
+		this.programInfoB.setUniformMatrixFloat('uViewMatrix', this.viewMatrix);	
+		
+		
+		this.camera.update(dt,t);
+
+		mat4.identity(this.viewMatrix);
+		mat4.rotateX(this.viewMatrix, this.viewMatrix, this.camera.verticalAngle);
+		mat4.rotateY(this.viewMatrix, this.viewMatrix, this.camera.horizontalAngle);
+		mat4.translate(this.viewMatrix, this.viewMatrix, this.camera.pos);
 		
 	}
 

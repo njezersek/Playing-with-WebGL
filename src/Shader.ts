@@ -5,6 +5,7 @@ export default class Shader{
 	private program: WebGLProgram;
 	private uniformLocationCache: Map<string, WebGLUniformLocation | null> = new Map();
 	private gl: WebGL2RenderingContext;
+	
 	constructor(private w: WebGLw, private vertexCode: string, private fragmentCode: string){
 		this.gl = w.gl;
 
