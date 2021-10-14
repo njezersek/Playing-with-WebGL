@@ -3,6 +3,7 @@ import { mat4 } from 'gl-matrix';
 import Application from 'Application'
 import Shader from 'Shader';
 import VertexArray from 'VertexArray';
+import Cube from 'Cube';
 
 import vertexShaderCode from 'shaders/vertex.glsl';
 import fragmentShaderCodeA from 'shaders/fragment.glsl';
@@ -16,6 +17,7 @@ class App extends Application{
 	viewMatrix = mat4.create();
 	vaoSquare: VertexArray;
 	vaoDeltoid: VertexArray;
+	cube: Cube;
 
 	constructor(canvas: HTMLCanvasElement) {
 		super(canvas);
@@ -53,6 +55,8 @@ class App extends Application{
 			3
 		);
 
+		this.cube = new Cube(this.w);
+
 		window.addEventListener("keypress", e => {
 			let speed = 0.1;
 			if(e.key == "a"){
@@ -69,7 +73,7 @@ class App extends Application{
 
 	update(delta: number, t: number) : void {
 		mat4.identity(this.modelMatrix);
-		mat4.translate(this.modelMatrix, this.modelMatrix, [0.0, 0.0, -6.0]);
+		mat4.translate(this.modelMatrix, this.modelMatrix, [3.0, 0.0, -10.0]);
 		mat4.rotateY(this.modelMatrix, this.modelMatrix, -Math.PI/4+t/1000);
 		mat4.rotateZ(this.modelMatrix, this.modelMatrix, -Math.PI/8+t/2000);
 
@@ -78,8 +82,8 @@ class App extends Application{
 		this.programInfoA.setUniformMatrixFloat('uViewMatrix', this.viewMatrix);		
 
 		mat4.identity(this.modelMatrix);
-		mat4.translate(this.modelMatrix, this.modelMatrix, [-0.0, 0.0, -9.0]);
-		mat4.scale(this.modelMatrix, this.modelMatrix, new Float32Array([2,2,2]))
+		mat4.translate(this.modelMatrix, this.modelMatrix, [-0.0, 0.0, -15.0]);
+		mat4.scale(this.modelMatrix, this.modelMatrix, new Float32Array([4,4,4]))
 		
 		this.programInfoB.enable();
 		this.programInfoB.setUniformMatrixFloat('uModelMatrix', this.modelMatrix);
@@ -87,7 +91,7 @@ class App extends Application{
 		
 	}
 
-	render(delta: number, t: number): void {
+	render(dt: number, t: number): void {
 		//console.log(1000/delta);
 		// draw with program A
 		this.programInfoA.enable();
@@ -98,6 +102,9 @@ class App extends Application{
 		this.programInfoB.enable();
 		this.vaoDeltoid.enable();
 		this.gl.drawArraysInstanced(this.gl.TRIANGLE_STRIP, 0, this.vaoDeltoid.getNumVertecies(), 1);
+
+		this.cube.setViewMatrix(this.viewMatrix);
+		this.cube.render(dt, t);
 	}
 
 	resize(width: number, height: number): void {
@@ -119,8 +126,9 @@ class App extends Application{
 		this.programInfoB.setUniformMatrixFloat('uProjectionMatrix', this.projectionMatrix);
 		this.programInfoB.setUniformVectorFloat('uScreenSize', new Float32Array([width, height]));
 
-	}
 
+		this.cube.setProjectionMatrix(this.projectionMatrix);
+	}
 }
 
 document.addEventListener('DOMContentLoaded', () => {

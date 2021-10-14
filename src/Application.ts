@@ -1,5 +1,7 @@
 import WebGLw from "WebGLw";
-
+/*
+This class handles resizing and basic geme tick.
+*/
 export default abstract class Application{
 	private running = false;
 	private prevTick = 0;
@@ -46,10 +48,10 @@ export default abstract class Application{
 	}
 
 	// update code (input, animations, AI ...)
-	abstract update(delta: number, t: number) : void;
+	abstract update(dt: number, t: number) : void;
 
 	// render code (gl API calls)
-	abstract render(delta: number, t: number) : void;
+	abstract render(dt: number, t: number) : void;
 
 	// resize code (e.g. update projection matrix)
 	abstract resize(width: number, height: number) : void;
