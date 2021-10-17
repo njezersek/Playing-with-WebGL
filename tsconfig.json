@@ -6,6 +6,7 @@
 		"strict": true,
 		"strictNullChecks": true,
 		"strictPropertyInitialization": true,
+		"allowSyntheticDefaultImports": true,
 		"module": "es6",
 		"target": "es5",
 		"allowJs": true,

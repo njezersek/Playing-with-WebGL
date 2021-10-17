@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@types/webgl-ext": "0.0.32",
-    "gl-matrix": "^3.4.3"
+    "gl-matrix": "^3.4.3",
+    "simplex-noise": "^3.0.0"
   }
 }

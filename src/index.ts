@@ -8,6 +8,7 @@ import Cube from 'Cube';
 import vertexShaderCode from 'shaders/vertex.glsl';
 import fragmentShaderCodeA from 'shaders/fragment.glsl';
 import fragmentShaderCodeB from 'shaders/fragmentSolidWhite.glsl';
+import Terrain from 'Terrain';
 
 class Camera{
 	private _horizontalAngle = 0;
@@ -69,6 +70,7 @@ class App extends Application{
 	vaoSquare: VertexArray;
 	vaoDeltoid: VertexArray;
 	cube: Cube;
+	terrain: Terrain;
 	camera = new Camera();
 
 	constructor(canvas: HTMLCanvasElement) {
@@ -108,6 +110,7 @@ class App extends Application{
 		);
 
 		this.cube = new Cube(this.w);
+		this.terrain = new Terrain(this.w);
 	}
 
 	onMouseMove(e: MouseEvent){
@@ -135,7 +138,7 @@ class App extends Application{
 
 	update(dt: number, t: number) : void {
 		mat4.identity(this.modelMatrix);
-		mat4.translate(this.modelMatrix, this.modelMatrix, [3.0, 0.0, -10.0]);
+		mat4.translate(this.modelMatrix, this.modelMatrix, [3.0, 1.0, -10.0]);
 		mat4.rotateY(this.modelMatrix, this.modelMatrix, -Math.PI/4+t/1000);
 		mat4.rotateZ(this.modelMatrix, this.modelMatrix, -Math.PI/8+t/2000);
 
@@ -174,7 +177,10 @@ class App extends Application{
 		this.gl.drawArraysInstanced(this.gl.TRIANGLE_STRIP, 0, this.vaoDeltoid.getNumVertecies(), 1);
 
 		this.cube.setViewMatrix(this.viewMatrix);
-		this.cube.render(dt, t);
+		//this.cube.render(dt, t);
+
+		this.terrain.setViewMatrix(this.viewMatrix);
+		this.terrain.render(dt, t);
 	}
 
 	resize(width: number, height: number): void {
@@ -198,6 +204,7 @@ class App extends Application{
 
 
 		this.cube.setProjectionMatrix(this.projectionMatrix);
+		this.terrain.setProjectionMatrix(this.projectionMatrix);
 	}
 }
 
