@@ -1,11 +1,10 @@
 import Chunk from 'Chunk';
 import { vec3 } from 'gl-matrix';
-import WebGLw from 'WebGLw';
 
 export default class ChunkLoader{
 	chunkSize = 1;
 	cache = new Map<string, Chunk>();
-	constructor(private w: WebGLw){
+	constructor(){
 		
 	}
 
@@ -18,7 +17,7 @@ export default class ChunkLoader{
 
 		console.log("New chunk", u, v);
 
-		chunk = new Chunk(this.w, u, v);
+		chunk = new Chunk(u, v);
 		this.cache.set(`${u},${v}`, chunk);
 		return chunk;
 	}

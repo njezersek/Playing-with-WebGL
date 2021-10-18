@@ -1,4 +1,3 @@
-export let glw: WebGLw;
 export default class WebGLw{
 	gl: WebGL2RenderingContext;
 
@@ -34,3 +33,5 @@ export default class WebGLw{
 		this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, n);
 	}
 }
+
+export let glw: WebGLw;

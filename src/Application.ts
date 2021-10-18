@@ -1,17 +1,15 @@
-import WebGLw from "WebGLw";
+import WebGLw, { glw } from "WebGLw";
+
 /*
 This class handles resizing and basic geme tick.
 */
 export default abstract class Application{
 	private running = false;
 	private prevTick = 0;
-	protected w: WebGLw;
-	protected gl: WebGL2RenderingContext;
 	protected pointerStatus: "locked" | "unlocked";
 
 	constructor(protected canvas: HTMLCanvasElement){
-		this.w = new WebGLw(canvas);
-		this.gl = this.w.gl;
+		new WebGLw(canvas);
 		window.addEventListener('resize', e => this.resizeHandle());
 
 		this.pointerStatus = "unlocked";
@@ -54,7 +52,7 @@ export default abstract class Application{
 	private tick(t: number){
 		const delta = t - this.prevTick;
 		this.prevTick = t;
-		this.w.clearCanvas();
+		glw.clearCanvas();
 		this.update(delta, t);
 		this.render(delta, t);
 		if(this.running){
@@ -67,7 +65,7 @@ export default abstract class Application{
 			this.canvas.width = window.innerWidth;
 			this.canvas.height = window.innerHeight;
 			
-			this.w.resize();
+			glw.resize();
 			
 			this.resize(window.innerWidth, window.innerHeight);
 		}

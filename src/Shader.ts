@@ -1,48 +1,46 @@
-import WebGLw from "WebGLw";
+import { glw } from 'WebGLw';
+
 export default class Shader{
 	private vertexShader: WebGLShader;
 	private fragmentShader: WebGLShader;
 	private program: WebGLProgram;
 	private uniformLocationCache: Map<string, WebGLUniformLocation | null> = new Map();
-	private gl: WebGL2RenderingContext;
 	
-	constructor(private w: WebGLw, private vertexCode: string, private fragmentCode: string){
-		this.gl = w.gl;
-
-		this.vertexShader = this.loadShader(this.gl.VERTEX_SHADER, vertexCode);
-		this.fragmentShader = this.loadShader(this.gl.FRAGMENT_SHADER, fragmentCode);
+	constructor(private vertexCode: string, private fragmentCode: string){
+		this.vertexShader = this.loadShader(glw.gl.VERTEX_SHADER, vertexCode);
+		this.fragmentShader = this.loadShader(glw.gl.FRAGMENT_SHADER, fragmentCode);
 
 		// Create the shader program
-		const shaderProgram = this.gl.createProgram();
+		const shaderProgram = glw.gl.createProgram();
 		if(!shaderProgram) throw "Unable to initialize the shader program.";
 		this.program = shaderProgram;
 
-		this.gl.attachShader(shaderProgram, this.vertexShader);
-		this.gl.attachShader(shaderProgram, this.fragmentShader);
-		this.gl.linkProgram(shaderProgram);
-		this.gl.deleteShader(this.vertexShader);
-		this.gl.deleteShader(this.fragmentShader);
+		glw.gl.attachShader(shaderProgram, this.vertexShader);
+		glw.gl.attachShader(shaderProgram, this.fragmentShader);
+		glw.gl.linkProgram(shaderProgram);
+		glw.gl.deleteShader(this.vertexShader);
+		glw.gl.deleteShader(this.fragmentShader);
 
 		// If creating the shader program failed, alert
-		if (!this.gl.getProgramParameter(shaderProgram, this.gl.LINK_STATUS)) {
-			throw 'Unable to initialize the shader program: ' + this.gl.getProgramInfoLog(shaderProgram);
+		if (!glw.gl.getProgramParameter(shaderProgram, glw.gl.LINK_STATUS)) {
+			throw 'Unable to initialize the shader program: ' + glw.gl.getProgramInfoLog(shaderProgram);
 		}
 	}
 
 	private loadShader(type: number, source: string) {
-		const shader = this.gl.createShader(type);
+		const shader = glw.gl.createShader(type);
 		if(!shader) throw "Unable to create shader.";
 	
 		// Send the source to the shader object
-		this.gl.shaderSource(shader, source);
+		glw.gl.shaderSource(shader, source);
 	
 		// Compile the shader program
-		this.gl.compileShader(shader);
+		glw.gl.compileShader(shader);
 	
 		// See if it compiled successfully
-		if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
-			let error = this.gl.getShaderInfoLog(shader);
-			this.gl.deleteShader(shader);
+		if (!glw.gl.getShaderParameter(shader, glw.gl.COMPILE_STATUS)) {
+			let error = glw.gl.getShaderInfoLog(shader);
+			glw.gl.deleteShader(shader);
 			throw 'An error occurred compiling the shaders: ' + error;
 		}
 	
@@ -50,23 +48,23 @@ export default class Shader{
 	}
 
 	enable(){
-		this.gl.useProgram(this.program);
+		glw.gl.useProgram(this.program);
 	}
 
 	setUniformVectorFloat(name: string, data: Float32List){
 		let location = this.getUniformLocation(name);
 
 		if(data.length == 1){
-			this.gl.uniform1fv(location, data);
+			glw.gl.uniform1fv(location, data);
 		}
 		else if(data.length == 2){
-			this.gl.uniform2fv(location, data);
+			glw.gl.uniform2fv(location, data);
 		}
 		else if(data.length == 3){
-			this.gl.uniform3fv(location, data);
+			glw.gl.uniform3fv(location, data);
 		}
 		else if(data.length == 4){
-			this.gl.uniform4fv(location, data);
+			glw.gl.uniform4fv(location, data);
 		}
 	}
 
@@ -75,26 +73,26 @@ export default class Shader{
 
 		if(!transpose) transpose = false;
 		if(data.length == 4){
-			this.gl.uniformMatrix2fv(location, transpose, data);
+			glw.gl.uniformMatrix2fv(location, transpose, data);
 		}
 		else if(data.length == 9){
-			this.gl.uniformMatrix3fv(location, transpose, data);
+			glw.gl.uniformMatrix3fv(location, transpose, data);
 		}
 		else if(data.length == 16){
-			this.gl.uniformMatrix4fv(location, transpose, data);
+			glw.gl.uniformMatrix4fv(location, transpose, data);
 		}
 	}
 
 	getUniformLocation(name: string){
 		let location = this.uniformLocationCache.get(name) as WebGLUniformLocation | undefined | null;
 		if(location === undefined){
-			location = this.gl.getUniformLocation(this.program, name);
+			location = glw.gl.getUniformLocation(this.program, name);
 			this.uniformLocationCache.set(name, location);
 		}
 		return location;
 	}
 
 	getAttributeLocation(name: string){
-		return this.gl.getAttribLocation(this.program, name);
+		return glw.gl.getAttribLocation(this.program, name);
 	}
 }

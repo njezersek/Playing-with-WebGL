@@ -1,16 +1,16 @@
 import { mat4, vec3 } from 'gl-matrix';
 import SimplexNoise from 'simplex-noise';
 
-import WebGLw from 'WebGLw';
 import Shader from 'Shader';
 import VertexArray from 'VertexArray';
+import Texture from 'Texture';
+import { glw } from 'WebGLw';
 
 import vertexShaderCode from 'shaders/vertex.glsl';
 import fragmentShaderCode from 'shaders/fragment.glsl';
 
 import rockTexturePath from 'textures/rock.jpg';
 import grassTexturePath from 'textures/grass.jpg';
-import Texture from 'Texture';
 
 export default class Terrain{
 	private program: Shader;
@@ -18,7 +18,6 @@ export default class Terrain{
 	private modelMatrix = mat4.create();
 	private viewMatrix = mat4.create();
 	private projectionMatrix = mat4.create();
-	private gl: WebGL2RenderingContext;
 
 	private vertecies: number[] = [];
 	private normals: number[] = [];
@@ -32,10 +31,9 @@ export default class Terrain{
 	rockTexture: Texture;
 	grassTexture: Texture;
 
-	constructor(private w: WebGLw){
-		this.gl = w.gl;
+	constructor(){
 		this.noise = new SimplexNoise(0); // 0, 5
-		this.program = new Shader(this.w, vertexShaderCode, fragmentShaderCode);
+		this.program = new Shader(vertexShaderCode, fragmentShaderCode);
 
 		// inti a grid of verticies
 		for(let x=0; x<this.size; x++){
@@ -60,7 +58,7 @@ export default class Terrain{
 			}
 		}
 
-		this.vertexArray = new VertexArray(this.w);
+		this.vertexArray = new VertexArray();
 		this.vertexArray.addVertexBuffer(
 			this.program.getAttributeLocation('aVertexPosition'),
 			new Float32Array(this.vertecies),
@@ -78,8 +76,8 @@ export default class Terrain{
 		);
 		this.vertexArray.setIndexBuffer(new Uint16Array(this.indecies));
 
-		this.rockTexture = new Texture(this.w, rockTexturePath);
-		this.grassTexture = new Texture(this.w, grassTexturePath);
+		this.rockTexture = new Texture(rockTexturePath);
+		this.grassTexture = new Texture(grassTexturePath);
 	}
 
 	height(x: number, y: number){
@@ -127,16 +125,16 @@ export default class Terrain{
 		this.program.setUniformMatrixFloat('uProjectionMatrix', this.projectionMatrix);
 
 		let texUint = 0;
-		this.gl.activeTexture(this.gl.TEXTURE0 + texUint);
-		this.gl.bindTexture(this.gl.TEXTURE_2D, this.rockTexture.texture);
-		this.gl.uniform1i(this.program.getUniformLocation('uRock'), texUint);
+		glw.gl.activeTexture(glw.gl.TEXTURE0 + texUint);
+		glw.gl.bindTexture(glw.gl.TEXTURE_2D, this.rockTexture.texture);
+		glw.gl.uniform1i(this.program.getUniformLocation('uRock'), texUint);
 
 		texUint = 1;
-		this.gl.activeTexture(this.gl.TEXTURE0 + texUint);
-		this.gl.bindTexture(this.gl.TEXTURE_2D, this.grassTexture.texture);
-		this.gl.uniform1i(this.program.getUniformLocation('uGrass'), texUint);
+		glw.gl.activeTexture(glw.gl.TEXTURE0 + texUint);
+		glw.gl.bindTexture(glw.gl.TEXTURE_2D, this.grassTexture.texture);
+		glw.gl.uniform1i(this.program.getUniformLocation('uGrass'), texUint);
 
-		this.gl.drawElements(this.gl.TRIANGLES, this.vertexArray.getNumIndcies(), this.gl.UNSIGNED_SHORT, 0);
+		glw.gl.drawElements(glw.gl.TRIANGLES, this.vertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0);
 	}
 
 	setViewMatrix(m: mat4){

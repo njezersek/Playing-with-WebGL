@@ -7,6 +7,7 @@ import Water from 'Water';
 import Texture from 'Texture';
 import Camera from 'Camera';
 
+
 import texturePath from 'textures/rock.jpg';
 import ChunkLoader from 'ChunkLoader';
 
@@ -25,16 +26,13 @@ class App extends Application{
 	constructor(canvas: HTMLCanvasElement) {
 		super(canvas);
 
-		this.cube = new Cube(this.w);
-		this.terrain = new Terrain(this.w);
-		this.water = new Water(this.w);
+		this.cube = new Cube();
+		this.terrain = new Terrain();
+		this.water = new Water();
 
-		this.texture = new Texture(this.w, texturePath);
+		this.texture = new Texture(texturePath);
 
-		this.chunkloader = new ChunkLoader(this.w);
-		
-		console.log("gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS", this.gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
-		console.log("tex", texturePath);
+		this.chunkloader = new ChunkLoader();	
 	}
 
 	update(dt: number, t: number) : void {

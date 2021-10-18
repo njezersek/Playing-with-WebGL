@@ -1,8 +1,9 @@
 import { mat4 } from 'gl-matrix';
 
-import WebGLw from 'WebGLw';
 import Shader from 'Shader';
 import VertexArray from 'VertexArray';
+import { glw } from 'WebGLw';
+
 
 import vertexShaderCode from 'shaders/vertex.glsl';
 import fragmentShaderCode from 'shaders/water-fragment.glsl';
@@ -13,13 +14,11 @@ export default class Cube{
 	private modelMatrix = mat4.create();
 	private viewMatrix = mat4.create();
 	private projectionMatrix = mat4.create();
-	gl: WebGL2RenderingContext;
 
-	constructor(private w: WebGLw){
-		this.gl = w.gl;
-		this.program = new Shader(this.w, vertexShaderCode, fragmentShaderCode);
+	constructor(){
+		this.program = new Shader(vertexShaderCode, fragmentShaderCode);
 
-		this.vertexArray = new VertexArray(this.w);
+		this.vertexArray = new VertexArray();
 		this.vertexArray.addVertexBuffer(
 			this.program.getAttributeLocation('aVertexPosition'),
 			new Float32Array([
@@ -50,7 +49,7 @@ export default class Cube{
 		this.program.setUniformMatrixFloat('uViewMatrix', this.viewMatrix);	
 		this.program.setUniformMatrixFloat('uProjectionMatrix', this.projectionMatrix);
 
-		this.gl.drawElements(this.gl.TRIANGLES, this.vertexArray.getNumIndcies(), this.gl.UNSIGNED_SHORT, 0);
+		glw.gl.drawElements(glw.gl.TRIANGLES, this.vertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0);
 	}
 
 	setViewMatrix(m: mat4){
