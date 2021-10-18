@@ -2,20 +2,23 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
-module.exports = {
-  mode: 'development',
+module.exports = (env, options) => ({
   entry: './src/index.ts',
   plugins: [
     new HtmlWebpackPlugin({
       title: 'Development',
     }),
   ],
-  devtool: 'inline-source-map',
+  devtool: options.mode == 'development' ? 'source-map' : undefined,
   devServer: {
     static: './dist',
   },
   module: {
     rules: [
+      {
+        test: /\.(png|svg|jpg|jpeg|gif)$/i,
+        type: 'asset/resource',
+      },
       {
         test: /\.tsx?$/,
         use: 'ts-loader',
@@ -24,7 +27,7 @@ module.exports = {
       {
         test: /\.glsl$/i,
         use: 'raw-loader',
-      }
+      },
     ],
   },
   resolve: {
@@ -35,4 +38,4 @@ module.exports = {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist'),
   },
-};
+});

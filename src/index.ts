@@ -4,19 +4,23 @@ import Application from 'Application'
 import Shader from 'Shader';
 import VertexArray from 'VertexArray';
 import Cube from 'Cube';
+import Terrain from 'Terrain';
+import Water from 'Water';
+import Texture from 'Texture';
 
 import vertexShaderCode from 'shaders/vertex.glsl';
 import fragmentShaderCodeA from 'shaders/fragment.glsl';
 import fragmentShaderCodeB from 'shaders/fragmentSolidWhite.glsl';
-import Terrain from 'Terrain';
+
+import texturePath from 'textures/rock.jpg';
 
 class Camera{
 	private _horizontalAngle = 0;
-	private _verticalAngle = 0;
+	private _verticalAngle = Math.PI/8;
 	public forwardVelocity = 0;
 	public sidewaysVelocity = 0;
 	public verticalVelocity = 0;
-	pos = vec3.fromValues(0,0,0);
+	pos = vec3.fromValues(0,-2,0);
 
 	public update(dt: number, t: number){
 		let cameraDirMat = mat4.create();
@@ -71,7 +75,10 @@ class App extends Application{
 	vaoDeltoid: VertexArray;
 	cube: Cube;
 	terrain: Terrain;
+	water: Water;
 	camera = new Camera();
+
+	texture: Texture;
 
 	constructor(canvas: HTMLCanvasElement) {
 		super(canvas);
@@ -111,6 +118,12 @@ class App extends Application{
 
 		this.cube = new Cube(this.w);
 		this.terrain = new Terrain(this.w);
+		this.water = new Water(this.w);
+
+		this.texture = new Texture(this.w, texturePath);
+		
+		console.log("gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS", this.gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+		console.log("tex", texturePath);
 	}
 
 	onMouseMove(e: MouseEvent){
@@ -174,10 +187,19 @@ class App extends Application{
 		// draw with program B
 		this.programInfoB.enable();
 		this.vaoDeltoid.enable();
+		
+		const texUint = 0;
+		this.gl.activeTexture(this.gl.TEXTURE0 + texUint);
+		this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture.texture);
+		this.gl.uniform1i(this.programInfoB.getUniformLocation('uTex'), texUint);
+
 		this.gl.drawArraysInstanced(this.gl.TRIANGLE_STRIP, 0, this.vaoDeltoid.getNumVertecies(), 1);
 
 		this.cube.setViewMatrix(this.viewMatrix);
 		//this.cube.render(dt, t);
+
+		this.water.setViewMatrix(this.viewMatrix);
+		this.water.render(dt, t);
 
 		this.terrain.setViewMatrix(this.viewMatrix);
 		this.terrain.render(dt, t);
@@ -202,9 +224,9 @@ class App extends Application{
 		this.programInfoB.setUniformMatrixFloat('uProjectionMatrix', this.projectionMatrix);
 		this.programInfoB.setUniformVectorFloat('uScreenSize', new Float32Array([width, height]));
 
-
 		this.cube.setProjectionMatrix(this.projectionMatrix);
 		this.terrain.setProjectionMatrix(this.projectionMatrix);
+		this.water.setProjectionMatrix(this.projectionMatrix);
 	}
 }
 
