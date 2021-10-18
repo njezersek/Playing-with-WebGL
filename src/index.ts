@@ -7,32 +7,36 @@ import Water from 'Water';
 import Texture from 'Texture';
 import Camera from 'Camera';
 
+import rockTexturePath from 'textures/rock.jpg';
+import grassTexturePath from 'textures/grass.jpg';
 
 import texturePath from 'textures/rock.jpg';
 import ChunkLoader from 'ChunkLoader';
+import Chunk from 'Chunk';
 
 class App extends Application{
 	projectionMatrix = mat4.create();
 	modelMatrix = mat4.create();
 	viewMatrix = mat4.create();
 	cube: Cube;
-	terrain: Terrain;
 	water: Water;
 	camera = new Camera();
 	texture: Texture;
 
 	chunkloader: ChunkLoader;
 
+	rockTexture = new Texture(rockTexturePath);
+	grassTexture = new Texture(grassTexturePath);
+
 	constructor(canvas: HTMLCanvasElement) {
 		super(canvas);
 
 		this.cube = new Cube();
-		this.terrain = new Terrain();
 		this.water = new Water();
 
 		this.texture = new Texture(texturePath);
 
-		this.chunkloader = new ChunkLoader();	
+		this.chunkloader = new ChunkLoader(this.rockTexture, this.grassTexture);	
 	}
 
 	update(dt: number, t: number) : void {
@@ -42,16 +46,21 @@ class App extends Application{
 		mat4.rotateX(this.viewMatrix, this.viewMatrix, this.camera.verticalAngle);
 		mat4.rotateY(this.viewMatrix, this.viewMatrix, this.camera.horizontalAngle);
 		mat4.translate(this.viewMatrix, this.viewMatrix, this.camera.pos);
-
-		this.chunkloader.getCurrentChunk(this.camera.pos);
 	}
 
 	render(dt: number, t: number): void {
 		this.cube.setViewMatrix(this.viewMatrix);
 		this.cube.render(dt, t);
-
-		this.terrain.setViewMatrix(this.viewMatrix);
-		this.terrain.render(dt, t);
+		
+		// render chunks
+		for(let u=-3; u<=3; u++){	
+			for(let v=-3; v<=3; v++){	
+				let chunk = this.chunkloader.getCurrentChunk(this.camera.pos, u, v);
+				chunk.setViewMatrix(this.viewMatrix);
+				chunk.setProjectionMatrix(this.projectionMatrix);
+				chunk.render(dt, t);
+			}
+		}
 
 		this.water.setViewMatrix(this.viewMatrix);
 		this.water.render(dt, t);
@@ -60,14 +69,13 @@ class App extends Application{
 	resize(width: number, height: number): void {
 		const fieldOfView = 45 * Math.PI / 180; 
 		const aspect = width / height;
-		const zNear = 0.1;
+		const zNear = 0.001;
 		const zFar = 100.0;
 
 		this.projectionMatrix = mat4.create();
 		mat4.perspective(this.projectionMatrix, fieldOfView, aspect, zNear, zFar);
 
 		this.cube.setProjectionMatrix(this.projectionMatrix);
-		this.terrain.setProjectionMatrix(this.projectionMatrix);
 		this.water.setProjectionMatrix(this.projectionMatrix);
 	}
 

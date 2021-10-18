@@ -9,9 +9,6 @@ import { glw } from 'WebGLw';
 import vertexShaderCode from 'shaders/vertex.glsl';
 import fragmentShaderCode from 'shaders/fragment.glsl';
 
-import rockTexturePath from 'textures/rock.jpg';
-import grassTexturePath from 'textures/grass.jpg';
-
 export default class Terrain{
 	private program: Shader;
 	private vertexArray: VertexArray;
@@ -24,14 +21,11 @@ export default class Terrain{
 	private indecies: number[] = [];
 	private texcoords: number[] = [];
 
-	private size = 128;
+	private size = 32;
 
 	private noise: SimplexNoise;
 
-	rockTexture: Texture;
-	grassTexture: Texture;
-
-	constructor(){
+	constructor(private u: number, private v: number, private rockTexture: Texture, private grassTexture: Texture){
 		this.noise = new SimplexNoise(0); // 0, 5
 		this.program = new Shader(vertexShaderCode, fragmentShaderCode);
 
@@ -40,14 +34,14 @@ export default class Terrain{
 			for(let y=0; y<this.size; y++){
 
 				// add vertex position
-				this.vertecies.push(x/this.size, this.height(x/this.size, y/this.size), y/this.size);
+				this.vertecies.push(x/(this.size-1), this.height(x/(this.size-1), y/(this.size-1)), y/(this.size-1));
 
 				// add vetex normal
-				let n = this.normal(x/this.size, y/this.size);
+				let n = this.normal(x/(this.size-1), y/(this.size-1));
 				this.normals.push(n[0], n[1], n[2]);
 
 				// add texture coordinate
-				this.texcoords.push(x/this.size, y/this.size);
+				this.texcoords.push(x/(this.size-1), y/(this.size-1));
 
 				// add connections between vertecies
 				if(x < this.size-1 && y < this.size-1){
@@ -75,12 +69,11 @@ export default class Terrain{
 			2
 		);
 		this.vertexArray.setIndexBuffer(new Uint16Array(this.indecies));
-
-		this.rockTexture = new Texture(rockTexturePath);
-		this.grassTexture = new Texture(grassTexturePath);
 	}
 
 	height(x: number, y: number){
+		x -= this.u;
+		y -= this.v;
 		let v = 0;
 		let base = 0;
 		let d = Math.sqrt((x-.5)**2 + (y-.5)**2) * 8;
@@ -116,8 +109,8 @@ export default class Terrain{
 		this.vertexArray.enable();
 
 		mat4.identity(this.modelMatrix);
-		mat4.translate(this.modelMatrix, this.modelMatrix, [-3, -2, -10]);
-		mat4.scale(this.modelMatrix, this.modelMatrix, new Float32Array([6,6,6]))
+		mat4.translate(this.modelMatrix, this.modelMatrix, [-this.u, 0, -this.v]);
+		mat4.scale(this.modelMatrix, this.modelMatrix, new Float32Array([1,1,1]))
 
 		this.program.enable();
 		this.program.setUniformMatrixFloat('uModelMatrix', this.modelMatrix);		
