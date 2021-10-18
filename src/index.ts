@@ -1,70 +1,13 @@
 import { mat4, vec3, quat } from 'gl-matrix';
 
 import Application from 'Application'
-import Shader from 'Shader';
-import VertexArray from 'VertexArray';
 import Cube from 'Cube';
 import Terrain from 'Terrain';
 import Water from 'Water';
 import Texture from 'Texture';
-
-import vertexShaderCode from 'shaders/vertex.glsl';
-import fragmentShaderCodeA from 'shaders/fragment.glsl';
-import fragmentShaderCodeB from 'shaders/fragmentSolidWhite.glsl';
+import Camera from 'Camera';
 
 import texturePath from 'textures/rock.jpg';
-
-class Camera{
-	private _horizontalAngle = 0;
-	private _verticalAngle = Math.PI/8;
-	public forwardVelocity = 0;
-	public sidewaysVelocity = 0;
-	public verticalVelocity = 0;
-	pos = vec3.fromValues(0,-2,0);
-	speed = 0.05;
-
-	public update(dt: number, t: number){
-		let cameraDirMat = mat4.create();
-		mat4.rotateY(cameraDirMat, cameraDirMat, -this.horizontalAngle);
-		//mat4.rotateX(cameraDirMat, cameraDirMat, -this.verticalAngle);
-		let cameraDir = vec3.fromValues(0,0,1);	
-		let up = vec3.fromValues(0,1,0);
-		let sideways = vec3.create();
-		vec3.transformMat4(cameraDir, cameraDir, cameraDirMat);
-		vec3.normalize(cameraDir, cameraDir);
-		
-		vec3.cross(sideways, cameraDir, up);
-		vec3.normalize(sideways, sideways);
-
-		vec3.scale(cameraDir, cameraDir, this.forwardVelocity * this.speed);
-		vec3.add(this.pos, this.pos, cameraDir);
-
-		vec3.scale(sideways, sideways, this.sidewaysVelocity * this.speed);
-		vec3.add(this.pos, this.pos, sideways);
-
-		vec3.scale(up, up, this.verticalVelocity * -this.speed);
-		vec3.add(this.pos, this.pos, up);
-	}
-
-	get horizontalAngle(){
-		return this._horizontalAngle;
-	}
-
-	set horizontalAngle(angle: number){
-		const k = 2*Math.PI;
-		this._horizontalAngle = (angle % k + k) % k;
-	}
-
-	get verticalAngle(){
-		return this._verticalAngle;
-	}
-
-	set verticalAngle(angle: number){
-		if(angle > Math.PI/2) angle = Math.PI/2;
-		if(angle < -Math.PI/2) angle = -Math.PI/2;
-		this._verticalAngle = angle;
-	}
-}
 
 class App extends Application{
 	projectionMatrix = mat4.create();
@@ -74,7 +17,6 @@ class App extends Application{
 	terrain: Terrain;
 	water: Water;
 	camera = new Camera();
-
 	texture: Texture;
 
 	constructor(canvas: HTMLCanvasElement) {
@@ -90,28 +32,6 @@ class App extends Application{
 		console.log("tex", texturePath);
 	}
 
-	onMouseMove(e: MouseEvent){
-		const mouseSpeed = 0.001;
-
-		this.camera.horizontalAngle += e.movementX * mouseSpeed;
-		this.camera.verticalAngle += e.movementY * mouseSpeed;
-	}
-
-	onKeyDown(e: KeyboardEvent) {
-		if(e.key == 'w') this.camera.forwardVelocity = 1;
-		if(e.key == 's') this.camera.forwardVelocity = -1;
-		if(e.key == 'a') this.camera.sidewaysVelocity = -1;
-		if(e.key == 'd') this.camera.sidewaysVelocity = 1;
-		if(e.key == 'Shift') this.camera.verticalVelocity = -1;
-		if(e.key == ' ') this.camera.verticalVelocity = 1;
-	}
-	
-	onKeyUp(e: KeyboardEvent) {
-		if(e.key == 'w' || e.key == 's') this.camera.forwardVelocity = 0;
-		if(e.key == 'a' || e.key == 'd') this.camera.sidewaysVelocity = 0;
-		if(e.key == 'Shift' || e.key == ' ') this.camera.verticalVelocity = 0;
-	}
-
 	update(dt: number, t: number) : void {
 		this.camera.update(dt,t);
 
@@ -119,12 +39,9 @@ class App extends Application{
 		mat4.rotateX(this.viewMatrix, this.viewMatrix, this.camera.verticalAngle);
 		mat4.rotateY(this.viewMatrix, this.viewMatrix, this.camera.horizontalAngle);
 		mat4.translate(this.viewMatrix, this.viewMatrix, this.camera.pos);
-		
 	}
 
 	render(dt: number, t: number): void {
-		
-
 		this.cube.setViewMatrix(this.viewMatrix);
 		this.cube.render(dt, t);
 
@@ -147,6 +64,28 @@ class App extends Application{
 		this.cube.setProjectionMatrix(this.projectionMatrix);
 		this.terrain.setProjectionMatrix(this.projectionMatrix);
 		this.water.setProjectionMatrix(this.projectionMatrix);
+	}
+
+	onMouseMove(e: MouseEvent){
+		const mouseSpeed = 0.001;
+
+		this.camera.horizontalAngle += e.movementX * mouseSpeed;
+		this.camera.verticalAngle += e.movementY * mouseSpeed;
+	}
+
+	onKeyDown(e: KeyboardEvent) {
+		if(e.key == 'w') this.camera.forwardVelocity = 1;
+		if(e.key == 's') this.camera.forwardVelocity = -1;
+		if(e.key == 'a') this.camera.sidewaysVelocity = -1;
+		if(e.key == 'd') this.camera.sidewaysVelocity = 1;
+		if(e.key == 'Shift') this.camera.verticalVelocity = -1;
+		if(e.key == ' ') this.camera.verticalVelocity = 1;
+	}
+	
+	onKeyUp(e: KeyboardEvent) {
+		if(e.key == 'w' || e.key == 's') this.camera.forwardVelocity = 0;
+		if(e.key == 'a' || e.key == 'd') this.camera.sidewaysVelocity = 0;
+		if(e.key == 'Shift' || e.key == ' ') this.camera.verticalVelocity = 0;
 	}
 }
 
