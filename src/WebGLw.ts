@@ -2,7 +2,9 @@ export default class WebGLw{
 	gl: WebGL2RenderingContext;
 
 	constructor(public canvas: HTMLCanvasElement){
-		let gl = canvas.getContext('webgl2');
+		let gl = canvas.getContext('webgl2', {
+			premultipliedAlpha: true
+		});
 		if(!gl) throw "WebGL in not supported in this browser!";
 		this.gl = gl;
 	}
@@ -13,6 +15,8 @@ export default class WebGLw{
 		this.gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
 		this.gl.clearDepth(1.0);                 // Clear everything
 		this.gl.enable(this.gl.DEPTH_TEST);           // Enable depth testing
+		this.gl.enable(this.gl.BLEND);
+		this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
 		this.gl.depthFunc(this.gl.LEQUAL);            // Near things obscure far things
 
 		// Clear the canvas before we start drawing on it.

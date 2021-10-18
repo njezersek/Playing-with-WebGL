@@ -21,6 +21,7 @@ class Camera{
 	public sidewaysVelocity = 0;
 	public verticalVelocity = 0;
 	pos = vec3.fromValues(0,-2,0);
+	speed = 0.05;
 
 	public update(dt: number, t: number){
 		let cameraDirMat = mat4.create();
@@ -35,13 +36,13 @@ class Camera{
 		vec3.cross(sideways, cameraDir, up);
 		vec3.normalize(sideways, sideways);
 
-		vec3.scale(cameraDir, cameraDir, this.forwardVelocity * 0.1);
+		vec3.scale(cameraDir, cameraDir, this.forwardVelocity * this.speed);
 		vec3.add(this.pos, this.pos, cameraDir);
 
-		vec3.scale(sideways, sideways, this.sidewaysVelocity * 0.1);
+		vec3.scale(sideways, sideways, this.sidewaysVelocity * this.speed);
 		vec3.add(this.pos, this.pos, sideways);
 
-		vec3.scale(up, up, this.verticalVelocity * -0.1);
+		vec3.scale(up, up, this.verticalVelocity * -this.speed);
 		vec3.add(this.pos, this.pos, up);
 	}
 
@@ -198,11 +199,11 @@ class App extends Application{
 		this.cube.setViewMatrix(this.viewMatrix);
 		//this.cube.render(dt, t);
 
-		this.water.setViewMatrix(this.viewMatrix);
-		this.water.render(dt, t);
-
 		this.terrain.setViewMatrix(this.viewMatrix);
 		this.terrain.render(dt, t);
+
+		this.water.setViewMatrix(this.viewMatrix);
+		this.water.render(dt, t);
 	}
 
 	resize(width: number, height: number): void {

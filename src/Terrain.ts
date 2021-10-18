@@ -8,7 +8,8 @@ import VertexArray from 'VertexArray';
 import vertexShaderCode from 'shaders/vertex.glsl';
 import fragmentShaderCode from 'shaders/fragment.glsl';
 
-import texturePath from 'textures/rock.jpg';
+import rockTexturePath from 'textures/rock.jpg';
+import grassTexturePath from 'textures/grass.jpg';
 import Texture from 'Texture';
 
 export default class Terrain{
@@ -28,11 +29,12 @@ export default class Terrain{
 
 	private noise: SimplexNoise;
 
-	texture: Texture;
+	rockTexture: Texture;
+	grassTexture: Texture;
 
 	constructor(private w: WebGLw){
 		this.gl = w.gl;
-		this.noise = new SimplexNoise(5);
+		this.noise = new SimplexNoise(0); // 0, 5
 		this.program = new Shader(this.w, vertexShaderCode, fragmentShaderCode);
 
 		// inti a grid of verticies
@@ -76,20 +78,22 @@ export default class Terrain{
 		);
 		this.vertexArray.setIndexBuffer(new Uint16Array(this.indecies));
 
-		this.texture = new Texture(this.w, texturePath);
+		this.rockTexture = new Texture(this.w, rockTexturePath);
+		this.grassTexture = new Texture(this.w, grassTexturePath);
 	}
 
 	height(x: number, y: number){
 		let v = 0;
 		let base = 0;
 		let d = Math.sqrt((x-.5)**2 + (y-.5)**2) * 8;
-		let mask = 1/(Math.exp(d)+Math.exp(-d));
-		//mask = 0.5;
-		base += this.noise.noise2D(x,y)**2 * 0.4 * mask;
+		let mask = 2/(Math.exp(d)+Math.exp(-d)) - .1;
+		mask = (this.noise.noise2D(x,y) + 0.2)**3 / 2;
+		base += this.noise.noise2D(x,y)**2 * 0.2 * mask;
 		base += this.noise.noise2D(x*2,y*2)**2 * 0.2 * mask;
 		v += base;
-		v += this.noise.noise2D(x*10,y*10) * 0.009;
-		v += this.noise.noise2D(x*20,y*20) * 1.1 * base**2;
+		v += this.noise.noise2D(x*6,y*6) * 0.02 * this.noise.noise2D(x,y)**2;
+		v += this.noise.noise2D(x*10,y*10)**2 * 0.09 * base;
+		v += this.noise.noise2D(x*20,y*20) * 0.1 * base;
 		return v;
 	}
 
@@ -121,10 +125,15 @@ export default class Terrain{
 		this.program.setUniformMatrixFloat('uViewMatrix', this.viewMatrix);	
 		this.program.setUniformMatrixFloat('uProjectionMatrix', this.projectionMatrix);
 
-		const texUint = 0;
+		let texUint = 0;
 		this.gl.activeTexture(this.gl.TEXTURE0 + texUint);
-		this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture.texture);
-		this.gl.uniform1i(this.program.getUniformLocation('uTex'), texUint);
+		this.gl.bindTexture(this.gl.TEXTURE_2D, this.rockTexture.texture);
+		this.gl.uniform1i(this.program.getUniformLocation('uRock'), texUint);
+
+		texUint = 1;
+		this.gl.activeTexture(this.gl.TEXTURE0 + texUint);
+		this.gl.bindTexture(this.gl.TEXTURE_2D, this.grassTexture.texture);
+		this.gl.uniform1i(this.program.getUniformLocation('uGrass'), texUint);
 
 		this.gl.drawElements(this.gl.TRIANGLES, this.vertexArray.getNumIndcies(), this.gl.UNSIGNED_SHORT, 0);
 	}
