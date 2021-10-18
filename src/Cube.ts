@@ -5,7 +5,7 @@ import Shader from 'Shader';
 import VertexArray from 'VertexArray';
 
 import vertexShaderCode from 'shaders/vertex.glsl';
-import fragmentShaderCode from 'shaders/fragment.glsl';
+import fragmentShaderCode from 'shaders/skyFragment.glsl';
 
 export default class Cube{
 	private program: Shader;
@@ -44,7 +44,7 @@ export default class Cube{
 
 		mat4.identity(this.modelMatrix);
 		mat4.translate(this.modelMatrix, this.modelMatrix, [0.0, Math.sin(t/1000)*0, -6.0]);
-		mat4.scale(this.modelMatrix, this.modelMatrix, new Float32Array([6,3,6]))
+		mat4.scale(this.modelMatrix, this.modelMatrix, new Float32Array([6,6,6]))
 		//mat4.rotateY(this.modelMatrix, this.modelMatrix, -Math.PI/4-t/1000);
 		//mat4.rotateZ(this.modelMatrix, this.modelMatrix, -Math.PI/8+t/2000);
 

@@ -67,13 +67,9 @@ class Camera{
 }
 
 class App extends Application{
-	programInfoA: Shader;
-	programInfoB: Shader;
 	projectionMatrix = mat4.create();
 	modelMatrix = mat4.create();
 	viewMatrix = mat4.create();
-	vaoSquare: VertexArray;
-	vaoDeltoid: VertexArray;
 	cube: Cube;
 	terrain: Terrain;
 	water: Water;
@@ -83,39 +79,6 @@ class App extends Application{
 
 	constructor(canvas: HTMLCanvasElement) {
 		super(canvas);
-		
-		this.programInfoA = new Shader(this.w, vertexShaderCode, fragmentShaderCodeA);
-		this.programInfoB = new Shader(this.w, vertexShaderCode, fragmentShaderCodeB);
-
-		this.vaoSquare = new VertexArray(this.w);
-		this.vaoSquare.addVertexBuffer(
-			this.programInfoA.getAttributeLocation('aVertexPosition'),
-			new Float32Array([1, 1, -1, 1, 1, 1, 1, -1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, -1, -1, -1, 1, -1, 1, 1, 1, 1, 1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, 1, -1, 1, -1, -1, 1, 1, 1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1, -1, 1, -1, 1, 1, -1, 1, -1, -1, -1, -1, -1,]),
-			3
-		);
-		this.vaoSquare.addVertexBuffer(
-			this.programInfoA.getAttributeLocation('aVertexNormal'),
-			new Float32Array([1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1,]),
-			3
-		);
-		this.vaoSquare.addVertexBuffer(
-			this.programInfoA.getAttributeLocation('aVertexTexcoord'),
-			new Float32Array([1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1,]),
-			2
-		);
-		this.vaoSquare.setIndexBuffer(new Uint16Array([0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23,],));
-		
-		this.vaoDeltoid = new VertexArray(this.w);
-		this.vaoDeltoid.addVertexBuffer(
-			this.programInfoB.getAttributeLocation('aVertexPosition'),
-			new Float32Array([
-				0.0,  1.0, 1,
-				-1.0,  1.0, 1,
-				1.0, -1.0, 1,
-				-1.0, -0.0, 1,
-			]),
-			3
-		);
 
 		this.cube = new Cube(this.w);
 		this.terrain = new Terrain(this.w);
@@ -132,7 +95,6 @@ class App extends Application{
 
 		this.camera.horizontalAngle += e.movementX * mouseSpeed;
 		this.camera.verticalAngle += e.movementY * mouseSpeed;
-		
 	}
 
 	onKeyDown(e: KeyboardEvent) {
@@ -151,24 +113,6 @@ class App extends Application{
 	}
 
 	update(dt: number, t: number) : void {
-		mat4.identity(this.modelMatrix);
-		mat4.translate(this.modelMatrix, this.modelMatrix, [3.0, 1.0, -10.0]);
-		mat4.rotateY(this.modelMatrix, this.modelMatrix, -Math.PI/4+t/1000);
-		mat4.rotateZ(this.modelMatrix, this.modelMatrix, -Math.PI/8+t/2000);
-
-		this.programInfoA.enable();
-		this.programInfoA.setUniformMatrixFloat('uModelMatrix', this.modelMatrix);		
-		this.programInfoA.setUniformMatrixFloat('uViewMatrix', this.viewMatrix);		
-
-		mat4.identity(this.modelMatrix);
-		mat4.translate(this.modelMatrix, this.modelMatrix, [-0.0, 0.0, -15.0]);
-		mat4.scale(this.modelMatrix, this.modelMatrix, new Float32Array([4,4,4]))
-		
-		this.programInfoB.enable();
-		this.programInfoB.setUniformMatrixFloat('uModelMatrix', this.modelMatrix);
-		this.programInfoB.setUniformMatrixFloat('uViewMatrix', this.viewMatrix);	
-		
-		
 		this.camera.update(dt,t);
 
 		mat4.identity(this.viewMatrix);
@@ -179,25 +123,10 @@ class App extends Application{
 	}
 
 	render(dt: number, t: number): void {
-		//console.log(1000/delta);
-		// draw with program A
-		this.programInfoA.enable();
-		this.vaoSquare.enable();
-		this.gl.drawElements(this.gl.TRIANGLES, this.vaoSquare.getNumIndcies(), this.gl.UNSIGNED_SHORT, 0);
 		
-		// draw with program B
-		this.programInfoB.enable();
-		this.vaoDeltoid.enable();
-		
-		const texUint = 0;
-		this.gl.activeTexture(this.gl.TEXTURE0 + texUint);
-		this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture.texture);
-		this.gl.uniform1i(this.programInfoB.getUniformLocation('uTex'), texUint);
-
-		this.gl.drawArraysInstanced(this.gl.TRIANGLE_STRIP, 0, this.vaoDeltoid.getNumVertecies(), 1);
 
 		this.cube.setViewMatrix(this.viewMatrix);
-		//this.cube.render(dt, t);
+		this.cube.render(dt, t);
 
 		this.terrain.setViewMatrix(this.viewMatrix);
 		this.terrain.render(dt, t);
@@ -214,16 +143,6 @@ class App extends Application{
 
 		this.projectionMatrix = mat4.create();
 		mat4.perspective(this.projectionMatrix, fieldOfView, aspect, zNear, zFar);
-
-		// set uniforms for program A
-		this.programInfoA.enable();
-		this.programInfoA.setUniformMatrixFloat('uProjectionMatrix', this.projectionMatrix);
-		this.programInfoA.setUniformVectorFloat('uScreenSize', new Float32Array([width, height]));
-
-		// set uniforms for program B
-		this.programInfoB.enable();
-		this.programInfoB.setUniformMatrixFloat('uProjectionMatrix', this.projectionMatrix);
-		this.programInfoB.setUniformVectorFloat('uScreenSize', new Float32Array([width, height]));
 
 		this.cube.setProjectionMatrix(this.projectionMatrix);
 		this.terrain.setProjectionMatrix(this.projectionMatrix);
