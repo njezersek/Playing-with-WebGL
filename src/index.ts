@@ -8,6 +8,7 @@ import Texture from 'Texture';
 import Camera from 'Camera';
 
 import texturePath from 'textures/rock.jpg';
+import ChunkLoader from 'ChunkLoader';
 
 class App extends Application{
 	projectionMatrix = mat4.create();
@@ -19,6 +20,8 @@ class App extends Application{
 	camera = new Camera();
 	texture: Texture;
 
+	chunkloader: ChunkLoader;
+
 	constructor(canvas: HTMLCanvasElement) {
 		super(canvas);
 
@@ -27,6 +30,8 @@ class App extends Application{
 		this.water = new Water(this.w);
 
 		this.texture = new Texture(this.w, texturePath);
+
+		this.chunkloader = new ChunkLoader(this.w);
 		
 		console.log("gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS", this.gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
 		console.log("tex", texturePath);
@@ -39,6 +44,8 @@ class App extends Application{
 		mat4.rotateX(this.viewMatrix, this.viewMatrix, this.camera.verticalAngle);
 		mat4.rotateY(this.viewMatrix, this.viewMatrix, this.camera.horizontalAngle);
 		mat4.translate(this.viewMatrix, this.viewMatrix, this.camera.pos);
+
+		this.chunkloader.getCurrentChunk(this.camera.pos);
 	}
 
 	render(dt: number, t: number): void {

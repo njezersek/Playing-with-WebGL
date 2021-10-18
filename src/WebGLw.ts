@@ -1,3 +1,4 @@
+export let glw: WebGLw;
 export default class WebGLw{
 	gl: WebGL2RenderingContext;
 
@@ -7,6 +8,8 @@ export default class WebGLw{
 		});
 		if(!gl) throw "WebGL in not supported in this browser!";
 		this.gl = gl;
+
+		glw = this;
 	}
 
 	clearCanvas(){
