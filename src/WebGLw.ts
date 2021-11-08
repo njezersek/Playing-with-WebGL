@@ -5,7 +5,7 @@ export default class WebGLw{
 		let gl = canvas.getContext('webgl2', {
 			premultipliedAlpha: true
 		});
-		if(!gl) throw "WebGL in not supported in this browser!";
+		if(!gl) throw "WebGL is not supported in this browser!";
 		this.gl = gl;
 
 		glw = this;

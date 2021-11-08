@@ -53,8 +53,8 @@ class App extends Application{
 		this.cube.render(dt, t);
 		
 		// render chunks
-		for(let u=-3; u<=3; u++){	
-			for(let v=-3; v<=3; v++){	
+		for(let u=-8; u<=8; u++){	
+			for(let v=-8; v<=8; v++){	
 				let chunk = this.chunkloader.getCurrentChunk(this.camera.pos, u, v);
 				chunk.setViewMatrix(this.viewMatrix);
 				chunk.setProjectionMatrix(this.projectionMatrix);

@@ -40,8 +40,8 @@ export default class Cube{
 		this.vertexArray.enable();
 
 		mat4.identity(this.modelMatrix);
-		mat4.translate(this.modelMatrix, this.modelMatrix, [-3, 0.01, -10]);
-		mat4.scale(this.modelMatrix, this.modelMatrix, new Float32Array([6,6,6]))
+		mat4.translate(this.modelMatrix, this.modelMatrix, [-8, 0.01, -16]);
+		mat4.scale(this.modelMatrix, this.modelMatrix, new Float32Array([16,16,16]))
 
 
 		this.program.enable();

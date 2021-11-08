@@ -29,8 +29,4 @@ export default class Texture{
 			glw.gl.generateMipmap(glw.gl.TEXTURE_2D);
 		});
 	}
-
-	enable(){
-
-	}
 }
