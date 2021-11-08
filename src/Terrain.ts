@@ -77,9 +77,10 @@ export default class Terrain{
 		let v = 0;
 		let base = 0;
 		let d = Math.sqrt((x-.5)**2 + (y-.5)**2) * 8;
-		let mask = 2/(Math.exp(d)+Math.exp(-d)) - .1;
-		mask = (this.noise.noise2D(x,y) + 0.2)**3 / 2;
+		//let mask = 2/(Math.exp(d)+Math.exp(-d)) - .1;
+		let mask = (this.noise.noise2D(x*.3,y*.3) + 0.3)**3 / 2;
 		//mask = this.noise.noise2D(x,y)**3;
+		base += this.noise.noise2D(x+.5,y*.5)**2 * 0.3 * mask;
 		base += this.noise.noise2D(x,y)**2 * 0.2 * mask;
 		base += this.noise.noise2D(x*2,y*2)**2 * 0.2 * mask;
 		v += base;
