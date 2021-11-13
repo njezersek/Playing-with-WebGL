@@ -1,91 +1,33 @@
-import { mat4, vec3, quat } from 'gl-matrix';
+import { mat4 } from 'gl-matrix';
 
 import Application from 'Application'
-import Cube from 'Cube';
-import Terrain from 'Terrain';
-import Water from 'Water';
-import Texture from 'Texture';
 import Camera from 'Camera';
-
-import rockTexturePath from 'textures/rock.jpg';
-import grassTexturePath from 'textures/grass.jpg';
-
-import texturePath from 'textures/rock.jpg';
-import ChunkLoader from 'ChunkLoader';
-import Chunk from 'Chunk';
-import Terrain2 from 'Terrain2';
+import Water from 'Water';
+import Terrain from 'Terrain';
 
 class App extends Application{
-	projectionMatrix = mat4.create();
-	modelMatrix = mat4.create();
-	viewMatrix = mat4.create();
-	cube: Cube;
+	terrain: Terrain;
 	water: Water;
-	terrain2: Terrain2;
 	camera = new Camera();
-	texture: Texture;
-
-	chunkloader: ChunkLoader;
-
-	rockTexture = new Texture(rockTexturePath);
-	grassTexture = new Texture(grassTexturePath);
 
 	constructor(canvas: HTMLCanvasElement) {
 		super(canvas);
 
-		this.cube = new Cube();
-		this.water = new Water();
-		this.terrain2 = new Terrain2();
-
-		this.texture = new Texture(texturePath);
-
-		this.chunkloader = new ChunkLoader(this.rockTexture, this.grassTexture);	
+		this.terrain = new Terrain(this.camera);
+		this.water = new Water(this.camera);
 	}
 
 	update(dt: number, t: number) : void {
 		this.camera.update(dt,t);
-
-		mat4.identity(this.viewMatrix);
-		mat4.rotateX(this.viewMatrix, this.viewMatrix, this.camera.verticalAngle);
-		mat4.rotateY(this.viewMatrix, this.viewMatrix, this.camera.horizontalAngle);
-		mat4.translate(this.viewMatrix, this.viewMatrix, this.camera.pos);
-
-		this.terrain2.setPlayerPosition(this.camera.pos);
 	}
 
 	render(dt: number, t: number): void {
-		//this.cube.setViewMatrix(this.viewMatrix);
-		//this.cube.render(dt, t);
-		
-		// render chunks
-		// for(let u=-5; u<=5; u++){	
-		// 	for(let v=-5; v<=5; v++){	
-		// 		let chunk = this.chunkloader.getCurrentChunk(this.camera.pos, u, v);
-		// 		chunk.setViewMatrix(this.viewMatrix);
-		// 		chunk.setProjectionMatrix(this.projectionMatrix);
-		// 		chunk.render(dt, t);
-		// 	}
-		// }
-
-		this.water.setViewMatrix(this.viewMatrix);
+		this.terrain.render(dt, t);
 		this.water.render(dt, t);
-
-		this.terrain2.setViewMatrix(this.viewMatrix);
-		this.terrain2.render(dt, t);
 	}
 
 	resize(width: number, height: number): void {
-		const fieldOfView = 45 * Math.PI / 180; 
-		const aspect = width / height;
-		const zNear = 0.001;
-		const zFar = 1000.0;
-
-		this.projectionMatrix = mat4.create();
-		mat4.perspective(this.projectionMatrix, fieldOfView, aspect, zNear, zFar);
-
-		this.cube.setProjectionMatrix(this.projectionMatrix);
-		this.water.setProjectionMatrix(this.projectionMatrix);
-		this.terrain2.setProjectionMatrix(this.projectionMatrix);
+		this.camera.resize(width, height);
 	}
 
 	onMouseMove(e: MouseEvent){

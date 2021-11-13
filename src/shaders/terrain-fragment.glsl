@@ -12,7 +12,7 @@ void main(){
 	if(uIsLine < 0.5){
 		Color = vec4(i-floor(i), i*2.-floor(i*2.), i*4.-floor(i*4.), .7);
 		Color += 0.3;
-		//Color = vec4(0.5,0.5,0.5,1.);
+		Color = vec4(0.53, 0.74, 0.27, 1);
 	}
 	else{
 		Color = vec4(1,1,1,1);

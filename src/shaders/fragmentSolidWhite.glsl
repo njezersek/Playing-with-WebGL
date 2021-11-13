@@ -6,5 +6,5 @@ out vec4 Color;
 uniform vec2 uScreenSize;
 
 void main(){
-	Color = vec4(1, 1, 1, 1.0);
+	Color = vec4(1);
 }

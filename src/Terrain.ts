@@ -1,141 +1,95 @@
-import { mat4, vec3 } from 'gl-matrix';
-import SimplexNoise from 'simplex-noise';
+import { mat4, vec2, vec3 } from 'gl-matrix';
 
+import { glw } from 'WebGLw';
 import Shader from 'Shader';
 import VertexArray from 'VertexArray';
-import Texture from 'Texture';
-import { glw } from 'WebGLw';
+import Camera from 'Camera';
 
-import vertexShaderCode from 'shaders/vertex.glsl';
-import fragmentShaderCode from 'shaders/fragment.glsl';
+import terrainVertexCode from 'shaders/terrain-vertex.glsl';
+import terrainFragmentCode from 'shaders/terrain-fragment.glsl';
 
 export default class Terrain{
 	private program: Shader;
-	private vertexArray: VertexArray;
-	private modelMatrix = mat4.create();
-	private viewMatrix = mat4.create();
-	private projectionMatrix = mat4.create();
+	private ringVertexArray: VertexArray;
+	private centerVertexArray: VertexArray;
+	private k = 32;
+	private renderDistance = 6;
 
-	private vertecies: number[] = [];
-	private normals: number[] = [];
-	private indecies: number[] = [];
-	private texcoords: number[] = [];
+	constructor(private camera: Camera){
+		this.program = new Shader(terrainVertexCode, terrainFragmentCode);
 
-	private size = 32;
+		const {E, T, V} = this.generateMesh(this.k, false);
 
-	private noise: SimplexNoise;
+		this.ringVertexArray = new VertexArray();
+		this.ringVertexArray.addVertexBuffer(
+			this.program.getAttributeLocation('aVertexPosition'),
+			new Float32Array(V),
+			3
+		);
+		this.ringVertexArray.setIndexBuffer(new Uint16Array(T));
 
-	constructor(private u: number, private v: number, private rockTexture: Texture, private grassTexture: Texture){
-		this.noise = new SimplexNoise(0); // 0, 5
-		this.program = new Shader(vertexShaderCode, fragmentShaderCode);
+		const {E: Ecenter, T: Tcenter, V: Vcenter} = this.generateMesh(this.k/2, true);
 
+		this.centerVertexArray = new VertexArray();
+		this.centerVertexArray.addVertexBuffer(
+			this.program.getAttributeLocation('aVertexPosition'),
+			new Float32Array(Vcenter),
+			3
+		);
+		this.centerVertexArray.setIndexBuffer(new Uint16Array(Tcenter));
+	}
+
+	generateMesh(k: number, fill: boolean){
+		let V = [];
+		let T = [];
+		let E = [];
+	
+		let m = 2*k+1; // size of the hole
+		if(fill)m -= 1;
+		let n = 2*m+1; // size of the square
+		let N = n+1; // no. of verticies on the side of a square
+	
 		// inti a grid of verticies
-		for(let x=0; x<this.size; x++){
-			for(let y=0; y<this.size; y++){
-
+		for(let x=-m; x<=m+1; x++){
+			for(let y=-m; y<=m+1; y++){
 				// add vertex position
-				this.vertecies.push(x/(this.size-1), this.height(x/(this.size-1), y/(this.size-1)), y/(this.size-1));
-
-				// add vetex normal
-				let n = this.normal(x/(this.size-1), y/(this.size-1));
-				this.normals.push(n[0], n[1], n[2]);
-
-				// add texture coordinate
-				this.texcoords.push(x/(this.size-1), y/(this.size-1));
-
+				V.push(x, 0, y); //V.push({x: x, y: y});
+	
 				// add connections between vertecies
-				if(x < this.size-1 && y < this.size-1){
-					let i = x*this.size + y;
-					this.indecies.push(i, i+1, i+this.size);
-					this.indecies.push(i+this.size, i+1, i+this.size+1);
+				let bound = (x < -k || x > k) || (y < -k || y > k)  || fill;
+				if(x <= m && y <= m && bound){
+					let i = (x+m)*N + (y+m);
+					T.push(i, i+1, i+N);
+					E.push(i, i+1, i+1, i+N, i+N, i);
+					T.push(i+N, i+1, i+N+1);
+					E.push(i+N, i+1, i+1, i+N+1, i+N+1, i+N);
 				}
 			}
 		}
-
-		this.vertexArray = new VertexArray();
-		this.vertexArray.addVertexBuffer(
-			this.program.getAttributeLocation('aVertexPosition'),
-			new Float32Array(this.vertecies),
-			3
-		);
-		this.vertexArray.addVertexBuffer(
-			this.program.getAttributeLocation('aVertexNormal'),
-			new Float32Array(this.normals),
-			3
-		);
-		this.vertexArray.addVertexBuffer(
-			this.program.getAttributeLocation('aVertexTexcoord'),
-			new Float32Array(this.texcoords),
-			2
-		);
-		this.vertexArray.setIndexBuffer(new Uint16Array(this.indecies));
-	}
-
-	height(x: number, y: number){
-		x -= this.u;
-		y -= this.v;
-		let v = 0;
-		let base = 0;
-		let d = Math.sqrt((x-.5)**2 + (y-.5)**2) * 8;
-		//let mask = 2/(Math.exp(d)+Math.exp(-d)) - .1;
-		let mask = (this.noise.noise2D(x*.3,y*.3) + 0.3)**3 / 2;
-		//mask = this.noise.noise2D(x,y)**3;
-		base += this.noise.noise2D(x+.5,y*.5)**2 * 0.3 * mask;
-		base += this.noise.noise2D(x,y)**2 * 0.2 * mask;
-		base += this.noise.noise2D(x*2,y*2)**2 * 0.2 * mask;
-		v += base;
-		v += this.noise.noise2D(x*6,y*6) * 0.02 * this.noise.noise2D(x,y)**2;
-		v += this.noise.noise2D(x*10,y*10)**2 * 0.09 * base;
-		v += this.noise.noise2D(x*20,y*20) * 0.1 * base;
-		return v;
-	}
-
-	normal(x: number, y: number){
-		const epsilon = 0.0001;
-
-		let v = vec3.fromValues(x, this.height(x,y), y);
-		let vx = vec3.fromValues(x+epsilon, this.height(x+epsilon,y), y);
-		let vy = vec3.fromValues(x, this.height(x,y+epsilon), y+epsilon);
-		
-		let dx = vec3.sub(vec3.create(), vx, v);
-		let dy = vec3.sub(vec3.create(), vy, v);
-
-		let n = vec3.cross(vec3.create(), dy, dx);
-		vec3.normalize(n, n);
-
-		return n;
+	
+		return {E, T, V};
 	}
 
 	render(dt: number, t: number){
-		this.vertexArray.enable();
-
-		mat4.identity(this.modelMatrix);
-		mat4.translate(this.modelMatrix, this.modelMatrix, [-this.u, 0, -this.v]);
-		mat4.scale(this.modelMatrix, this.modelMatrix, new Float32Array([1,1,1]))
+		this.ringVertexArray.enable();
 
 		this.program.enable();
-		this.program.setUniformMatrixFloat('uModelMatrix', this.modelMatrix);		
-		this.program.setUniformMatrixFloat('uViewMatrix', this.viewMatrix);	
-		this.program.setUniformMatrixFloat('uProjectionMatrix', this.projectionMatrix);
+		this.program.setUniformVectorFloat('uPlayerPosition', this.camera.position);
+		this.program.setUniformMatrixFloat('uViewMatrix', this.camera.viewMatrix);	
+		this.program.setUniformMatrixFloat('uProjectionMatrix', this.camera.projectionMatrix);
 
-		let texUint = 0;
-		glw.gl.activeTexture(glw.gl.TEXTURE0 + texUint);
-		glw.gl.bindTexture(glw.gl.TEXTURE_2D, this.rockTexture.texture);
-		glw.gl.uniform1i(this.program.getUniformLocation('uRock'), texUint);
+		this.program.setUniformVectorFloat('uRingWidth', new Float32Array([this.k]));
+		this.program.setUniformVectorFloat('uTime', new Float32Array([t]));
+		
+		this.program.setUniformVectorFloat('uIsLine', new Float32Array([0]));
+		glw.gl.drawElementsInstanced(glw.gl.TRIANGLES, this.ringVertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0, this.renderDistance);
+		this.program.setUniformVectorFloat('uIsLine', new Float32Array([1]));
+		glw.gl.drawElementsInstanced(glw.gl.LINES, this.ringVertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0, this.renderDistance);
 
-		texUint = 1;
-		glw.gl.activeTexture(glw.gl.TEXTURE0 + texUint);
-		glw.gl.bindTexture(glw.gl.TEXTURE_2D, this.grassTexture.texture);
-		glw.gl.uniform1i(this.program.getUniformLocation('uGrass'), texUint);
-
-		glw.gl.drawElements(glw.gl.TRIANGLES, this.vertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0);
-	}
-
-	setViewMatrix(m: mat4){
-		this.viewMatrix = mat4.clone(m);
-	}
-
-	setProjectionMatrix(m: mat4){
-		this.projectionMatrix = mat4.clone(m);
+		this.centerVertexArray.enable();
+		this.program.setUniformVectorFloat('uIsLine', new Float32Array([0]));
+		glw.gl.drawElements(glw.gl.TRIANGLES, this.centerVertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0);
+		this.program.setUniformVectorFloat('uIsLine', new Float32Array([1]));
+		glw.gl.drawElements(glw.gl.LINES, this.centerVertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0);
 	}
 }

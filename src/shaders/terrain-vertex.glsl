@@ -8,12 +8,11 @@ out float scale;
 out float instanceID;
 
 uniform mat4 uProjectionMatrix;
-uniform mat4 uModelMatrix;
 uniform mat4 uViewMatrix;
 uniform vec3 uPlayerPosition;
 uniform float uRingWidth;
 
-// Simplex 2D noise
+// Simplex 2D noise https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83#simplex-noise
 //
 vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
 
@@ -44,7 +43,6 @@ float snoise(vec2 v){
   return 130.0 * dot(m, g);
 }
 
-
 void main() {
 	instanceID = float(gl_InstanceID);
 	scale = pow(2., float(gl_InstanceID));
@@ -66,10 +64,16 @@ void main() {
 
 	// compute height
 	float height = 0.;
-	for(int i=0; i<4; i++){
-		height += snoise(v.xz/pow(2., float(i+3))) * pow(2.3, float(i));
+	float biom = snoise(v.xz/512.);
+	float m = abs(snoise(v.xz/256.));
+	// m = -2.*m*m*m + 3.*m*m - 0.6;
+	// mask = mask * mask * mask;
+	m = .9 - exp(-pow(abs(m*2.), 2.));
+	for(int i=0; i<6; i++){
+		height += snoise(v.xz/pow(2., float(i+2))) * pow(2.7, float(i-1));
 	}
 	//height += snoise(v.xz)*8.;
-	v.y = height;
-	gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix  * v;
+	v.y = (biom * m * abs(height) - 10.);
+	//v.y = abs(height) - 20.;
+	gl_Position = uProjectionMatrix * uViewMatrix * v;
 }
