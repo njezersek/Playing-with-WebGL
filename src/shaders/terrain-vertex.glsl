@@ -64,10 +64,16 @@ void main() {
 
 	// compute height
 	float height = 0.;
+	float biom = snoise(v.xz/512.);
+	float m = abs(snoise(v.xz/256.));
+	// m = -2.*m*m*m + 3.*m*m - 0.6;
+	// mask = mask * mask * mask;
+	m = .9 - exp(-pow(abs(m*2.), 2.));
 	for(int i=0; i<6; i++){
-		height += snoise(v.xz/pow(2., float(i+2))) * pow(2.3, float(i-1));
+		height += snoise(v.xz/pow(2., float(i+2))) * pow(2.7, float(i-1));
 	}
 	//height += snoise(v.xz)*8.;
-	v.y = height;
+	v.y = (biom * m * abs(height) - 10.);
+	//v.y = abs(height) - 20.;
 	gl_Position = uProjectionMatrix * uViewMatrix * v;
 }

@@ -13,6 +13,7 @@ export default class Terrain{
 	private ringVertexArray: VertexArray;
 	private centerVertexArray: VertexArray;
 	private k = 32;
+	private renderDistance = 6;
 
 	constructor(private camera: Camera){
 		this.program = new Shader(terrainVertexCode, terrainFragmentCode);
@@ -81,9 +82,9 @@ export default class Terrain{
 		this.program.setUniformVectorFloat('uTime', new Float32Array([t]));
 		
 		this.program.setUniformVectorFloat('uIsLine', new Float32Array([0]));
-		glw.gl.drawElementsInstanced(glw.gl.TRIANGLES, this.ringVertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0, 4);
+		glw.gl.drawElementsInstanced(glw.gl.TRIANGLES, this.ringVertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0, this.renderDistance);
 		this.program.setUniformVectorFloat('uIsLine', new Float32Array([1]));
-		glw.gl.drawElementsInstanced(glw.gl.LINES, this.ringVertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0, 4);
+		glw.gl.drawElementsInstanced(glw.gl.LINES, this.ringVertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0, this.renderDistance);
 
 		this.centerVertexArray.enable();
 		this.program.setUniformVectorFloat('uIsLine', new Float32Array([0]));

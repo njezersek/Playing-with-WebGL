@@ -17,7 +17,7 @@ void main() {
 	// compute vertex position
 	vec4 v = aVertexPosition;
 	//player = vec2(0);
-	v.xz *= 512.;  // scale the ring
+	v.xz *= 512.*4.;  // scale the ring
 	v.xz += -uPlayerPosition.xz; // move grid to player with step size acdording to scale 
 
 	// compute height
