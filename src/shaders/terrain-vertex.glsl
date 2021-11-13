@@ -43,11 +43,9 @@ float snoise(vec2 v){
   return 130.0 * dot(m, g);
 }
 
-float S = 1.;
-
 void main() {
 	instanceID = float(gl_InstanceID);
-	scale = pow(2., float(gl_InstanceID))*S;
+	scale = pow(2., float(gl_InstanceID));
 	// compute vertex position
 	vec4 v = aVertexPosition;
 	vec2 player = floor(-uPlayerPosition.xz/scale); // player position in grid
@@ -66,8 +64,8 @@ void main() {
 
 	// compute height
 	float height = 0.;
-	for(int i=0; i<4; i++){
-		height += snoise(v.xz/pow(2., float(i+3))*S) * pow(2.3, float(i))*S;
+	for(int i=0; i<6; i++){
+		height += snoise(v.xz/pow(2., float(i+2))) * pow(2.3, float(i-1));
 	}
 	//height += snoise(v.xz)*8.;
 	v.y = height;
