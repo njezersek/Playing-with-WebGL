@@ -1,8 +1,9 @@
 import { mat4, vec2, vec3 } from 'gl-matrix';
 
+import { glw } from 'WebGLw';
 import Shader from 'Shader';
 import VertexArray from 'VertexArray';
-import { glw } from 'WebGLw';
+import Camera from 'Camera';
 
 import terrainVertexCode from 'shaders/terrain-vertex.glsl';
 import terrainFragmentCode from 'shaders/terrain-fragment.glsl';
@@ -11,12 +12,9 @@ export default class Terrain{
 	private program: Shader;
 	private ringVertexArray: VertexArray;
 	private centerVertexArray: VertexArray;
-	private viewMatrix = mat4.create();
-	private projectionMatrix = mat4.create();
-	private playerPosition = vec3.create();
 	private k = 32;
 
-	constructor(){
+	constructor(private camera: Camera){
 		this.program = new Shader(terrainVertexCode, terrainFragmentCode);
 
 		const {E, T, V} = this.generateMesh(this.k, false);
@@ -75,9 +73,9 @@ export default class Terrain{
 		this.ringVertexArray.enable();
 
 		this.program.enable();
-		this.program.setUniformVectorFloat('uPlayerPosition', this.playerPosition);
-		this.program.setUniformMatrixFloat('uViewMatrix', this.viewMatrix);	
-		this.program.setUniformMatrixFloat('uProjectionMatrix', this.projectionMatrix);
+		this.program.setUniformVectorFloat('uPlayerPosition', this.camera.position);
+		this.program.setUniformMatrixFloat('uViewMatrix', this.camera.viewMatrix);	
+		this.program.setUniformMatrixFloat('uProjectionMatrix', this.camera.projectionMatrix);
 
 		this.program.setUniformVectorFloat('uRingWidth', new Float32Array([this.k]));
 		this.program.setUniformVectorFloat('uTime', new Float32Array([t]));
@@ -92,17 +90,5 @@ export default class Terrain{
 		glw.gl.drawElements(glw.gl.TRIANGLES, this.centerVertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0);
 		this.program.setUniformVectorFloat('uIsLine', new Float32Array([1]));
 		glw.gl.drawElements(glw.gl.LINES, this.centerVertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0);
-	}
-
-	setViewMatrix(m: mat4){
-		this.viewMatrix = mat4.clone(m);
-	}
-
-	setProjectionMatrix(m: mat4){
-		this.projectionMatrix = mat4.clone(m);
-	}
-
-	setPlayerPosition(v: vec3){
-		this.playerPosition = v;
 	}
 }

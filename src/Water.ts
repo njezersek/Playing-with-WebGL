@@ -1,8 +1,9 @@
 import { mat4, vec3 } from 'gl-matrix';
 
+import { glw } from 'WebGLw';
 import Shader from 'Shader';
 import VertexArray from 'VertexArray';
-import { glw } from 'WebGLw';
+import Camera from 'Camera';
 
 
 import vertexShaderCode from 'shaders/water-vertex.glsl';
@@ -11,11 +12,8 @@ import fragmentShaderCode from 'shaders/water-fragment.glsl';
 export default class Water{
 	private program: Shader;
 	private vertexArray: VertexArray;
-	private viewMatrix = mat4.create();
-	private projectionMatrix = mat4.create();
-	private playerPosition = vec3.create();
 
-	constructor(){
+	constructor(private camera: Camera){
 		this.program = new Shader(vertexShaderCode, fragmentShaderCode);
 
 		this.vertexArray = new VertexArray();
@@ -34,22 +32,10 @@ export default class Water{
 	render(dt: number, t: number){
 		this.vertexArray.enable();
 		this.program.enable();
-		this.program.setUniformVectorFloat('uPlayerPosition', this.playerPosition);
-		this.program.setUniformMatrixFloat('uViewMatrix', this.viewMatrix);	
-		this.program.setUniformMatrixFloat('uProjectionMatrix', this.projectionMatrix);
+		this.program.setUniformVectorFloat('uPlayerPosition', this.camera.position);
+		this.program.setUniformMatrixFloat('uViewMatrix', this.camera.viewMatrix);	
+		this.program.setUniformMatrixFloat('uProjectionMatrix', this.camera.projectionMatrix);
 
 		glw.gl.drawElements(glw.gl.TRIANGLES, this.vertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0);
-	}
-
-	setViewMatrix(m: mat4){
-		this.viewMatrix = mat4.clone(m);
-	}
-
-	setProjectionMatrix(m: mat4){
-		this.projectionMatrix = mat4.clone(m);
-	}
-
-	setPlayerPosition(v: vec3){
-		this.playerPosition = v;
 	}
 }

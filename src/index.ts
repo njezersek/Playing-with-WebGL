@@ -6,9 +6,6 @@ import Water from 'Water';
 import Terrain from 'Terrain';
 
 class App extends Application{
-	projectionMatrix = mat4.create();
-	modelMatrix = mat4.create();
-	viewMatrix = mat4.create();
 	terrain: Terrain;
 	water: Water;
 	camera = new Camera();
@@ -16,42 +13,21 @@ class App extends Application{
 	constructor(canvas: HTMLCanvasElement) {
 		super(canvas);
 
-		this.terrain = new Terrain();
-		this.water = new Water();
-
+		this.terrain = new Terrain(this.camera);
+		this.water = new Water(this.camera);
 	}
 
 	update(dt: number, t: number) : void {
 		this.camera.update(dt,t);
-
-		mat4.identity(this.viewMatrix);
-		mat4.rotateX(this.viewMatrix, this.viewMatrix, this.camera.verticalAngle);
-		mat4.rotateY(this.viewMatrix, this.viewMatrix, this.camera.horizontalAngle);
-		mat4.translate(this.viewMatrix, this.viewMatrix, this.camera.pos);
-
-		this.terrain.setPlayerPosition(this.camera.pos);
-		this.water.setPlayerPosition(this.camera.pos);
 	}
 
 	render(dt: number, t: number): void {
-		this.terrain.setViewMatrix(this.viewMatrix);
 		this.terrain.render(dt, t);
-
-		this.water.setViewMatrix(this.viewMatrix);
 		this.water.render(dt, t);
 	}
 
 	resize(width: number, height: number): void {
-		const fieldOfView = 45 * Math.PI / 180; 
-		const aspect = width / height;
-		const zNear = 1.;
-		const zFar = 1000.0;
-
-		this.projectionMatrix = mat4.create();
-		mat4.perspective(this.projectionMatrix, fieldOfView, aspect, zNear, zFar);
-
-		this.terrain.setProjectionMatrix(this.projectionMatrix);
-		this.water.setProjectionMatrix(this.projectionMatrix);
+		this.camera.resize(width, height);
 	}
 
 	onMouseMove(e: MouseEvent){
