@@ -65,6 +65,11 @@ void main() {
 	v.xz *= scale;  // scale the ring
 
 	// compute height
-	v.y = snoise(v.xz/64.)*16.;
+	float height = 0.;
+	for(int i=0; i<4; i++){
+		height += snoise(v.xz/pow(2., float(i+3))) * pow(2.3, float(i));
+	}
+	//height += snoise(v.xz)*8.;
+	v.y = height;
 	gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix  * v;
 }
