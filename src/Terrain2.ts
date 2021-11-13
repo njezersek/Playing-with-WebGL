@@ -12,7 +12,6 @@ export default class Terrain2{
 	private program: Shader;
 	private ringVertexArray: VertexArray;
 	private centerVertexArray: VertexArray;
-	private modelMatrix = mat4.create();
 	private viewMatrix = mat4.create();
 	private projectionMatrix = mat4.create();
 	private playerPosition = vec3.create();
@@ -75,12 +74,7 @@ export default class Terrain2{
 	render(dt: number, t: number){
 		this.ringVertexArray.enable();
 
-		mat4.identity(this.modelMatrix);
-		mat4.translate(this.modelMatrix, this.modelMatrix, [0, 0, 0]);
-		mat4.scale(this.modelMatrix, this.modelMatrix, new Float32Array([1,1,1]))
-
 		this.program.enable();
-		this.program.setUniformMatrixFloat('uModelMatrix', this.modelMatrix);	
 		this.program.setUniformVectorFloat('uPlayerPosition', this.playerPosition);
 		this.program.setUniformMatrixFloat('uViewMatrix', this.viewMatrix);	
 		this.program.setUniformMatrixFloat('uProjectionMatrix', this.projectionMatrix);

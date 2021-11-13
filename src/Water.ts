@@ -5,7 +5,7 @@ import VertexArray from 'VertexArray';
 import { glw } from 'WebGLw';
 
 
-import vertexShaderCode from 'shaders/vertex.glsl';
+import vertexShaderCode from 'shaders/water-vertex.glsl';
 import fragmentShaderCode from 'shaders/water-fragment.glsl';
 
 export default class Cube{

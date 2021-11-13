@@ -8,12 +8,11 @@ out float scale;
 out float instanceID;
 
 uniform mat4 uProjectionMatrix;
-uniform mat4 uModelMatrix;
 uniform mat4 uViewMatrix;
 uniform vec3 uPlayerPosition;
 uniform float uRingWidth;
 
-// Simplex 2D noise
+// Simplex 2D noise https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83#simplex-noise
 //
 vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
 
@@ -71,5 +70,5 @@ void main() {
 	}
 	//height += snoise(v.xz)*8.;
 	v.y = height;
-	gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix  * v;
+	gl_Position = uProjectionMatrix * uViewMatrix * v;
 }
