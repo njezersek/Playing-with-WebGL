@@ -66,6 +66,9 @@ export default class Shader{
 		else if(data.length == 4){
 			glw.gl.uniform4fv(location, data);
 		}
+		else{
+			throw "setUniformVectorFloat called with wrong data length";
+		}
 	}
 
 	setUniformMatrixFloat(name: string, data: Float32List, transpose?: boolean){
@@ -80,6 +83,9 @@ export default class Shader{
 		}
 		else if(data.length == 16){
 			glw.gl.uniformMatrix4fv(location, transpose, data);
+		}
+		else{
+			throw "setUniformMatrixFloat called with wrong data length";
 		}
 	}
 

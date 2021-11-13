@@ -7,7 +7,7 @@ export default class Camera{
 	public sidewaysVelocity = 0;
 	public verticalVelocity = 0;
 	pos = vec3.fromValues(0,-2,0);
-	speed = 0.05;
+	speed = 0.9;
 
 	public update(dt: number, t: number){
 		let cameraDirMat = mat4.create();
