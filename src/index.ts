@@ -15,13 +15,19 @@ import ChunkLoader from 'ChunkLoader';
 import Chunk from 'Chunk';
 import Terrain2 from 'Terrain2';
 
+import terrainVertexCode from 'shaders/terrain-vertex.glsl';
+import terrainFragmentCode from 'shaders/terrain-fragment.glsl';
+
+import waterVertexCode from 'shaders/water-vertex.glsl';
+import waterFragmentCode from 'shaders/water-fragment.glsl';
+
 class App extends Application{
 	projectionMatrix = mat4.create();
 	modelMatrix = mat4.create();
 	viewMatrix = mat4.create();
 	cube: Cube;
-	water: Water;
-	terrain2: Terrain2;
+	terrain: Terrain2;
+	water: Terrain2;
 	camera = new Camera();
 	texture: Texture;
 
@@ -34,8 +40,8 @@ class App extends Application{
 		super(canvas);
 
 		this.cube = new Cube();
-		this.water = new Water();
-		this.terrain2 = new Terrain2();
+		this.terrain = new Terrain2(terrainVertexCode, terrainFragmentCode);
+		this.water = new Terrain2(waterVertexCode, waterFragmentCode);
 
 		this.texture = new Texture(texturePath);
 
@@ -50,7 +56,8 @@ class App extends Application{
 		mat4.rotateY(this.viewMatrix, this.viewMatrix, this.camera.horizontalAngle);
 		mat4.translate(this.viewMatrix, this.viewMatrix, this.camera.pos);
 
-		this.terrain2.setPlayerPosition(this.camera.pos);
+		this.terrain.setPlayerPosition(this.camera.pos);
+		this.water.setPlayerPosition(this.camera.pos);
 	}
 
 	render(dt: number, t: number): void {
@@ -67,25 +74,26 @@ class App extends Application{
 		// 	}
 		// }
 
+		
+		this.terrain.setViewMatrix(this.viewMatrix);
+		this.terrain.render(dt, t);
+
 		this.water.setViewMatrix(this.viewMatrix);
 		this.water.render(dt, t);
-
-		this.terrain2.setViewMatrix(this.viewMatrix);
-		this.terrain2.render(dt, t);
 	}
 
 	resize(width: number, height: number): void {
 		const fieldOfView = 45 * Math.PI / 180; 
 		const aspect = width / height;
-		const zNear = 0.001;
+		const zNear = 1.;
 		const zFar = 1000.0;
 
 		this.projectionMatrix = mat4.create();
 		mat4.perspective(this.projectionMatrix, fieldOfView, aspect, zNear, zFar);
 
 		this.cube.setProjectionMatrix(this.projectionMatrix);
+		this.terrain.setProjectionMatrix(this.projectionMatrix);
 		this.water.setProjectionMatrix(this.projectionMatrix);
-		this.terrain2.setProjectionMatrix(this.projectionMatrix);
 	}
 
 	onMouseMove(e: MouseEvent){

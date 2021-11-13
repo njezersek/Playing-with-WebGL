@@ -1,4 +1,4 @@
-import { mat4 } from 'gl-matrix';
+import { mat4, vec3 } from 'gl-matrix';
 
 import Shader from 'Shader';
 import VertexArray from 'VertexArray';
@@ -8,12 +8,13 @@ import { glw } from 'WebGLw';
 import vertexShaderCode from 'shaders/water-vertex.glsl';
 import fragmentShaderCode from 'shaders/water-fragment.glsl';
 
-export default class Cube{
+export default class Water{
 	private program: Shader;
 	private vertexArray: VertexArray;
 	private modelMatrix = mat4.create();
 	private viewMatrix = mat4.create();
 	private projectionMatrix = mat4.create();
+	private playerPosition = vec3.create();
 
 	constructor(){
 		this.program = new Shader(vertexShaderCode, fragmentShaderCode);
@@ -45,6 +46,7 @@ export default class Cube{
 
 
 		this.program.enable();
+		this.program.setUniformVectorFloat('uPlayerPosition', this.playerPosition);
 		this.program.setUniformMatrixFloat('uModelMatrix', this.modelMatrix);		
 		this.program.setUniformMatrixFloat('uViewMatrix', this.viewMatrix);	
 		this.program.setUniformMatrixFloat('uProjectionMatrix', this.projectionMatrix);
@@ -58,5 +60,9 @@ export default class Cube{
 
 	setProjectionMatrix(m: mat4){
 		this.projectionMatrix = mat4.clone(m);
+	}
+
+	setPlayerPosition(v: vec3){
+		this.playerPosition = v;
 	}
 }

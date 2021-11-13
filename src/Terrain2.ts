@@ -4,10 +4,6 @@ import Shader from 'Shader';
 import VertexArray from 'VertexArray';
 import { glw } from 'WebGLw';
 
-
-import vertexShaderCode from 'shaders/terrain-vertex.glsl';
-import fragmentShaderCode from 'shaders/terrain-fragment.glsl';
-
 export default class Terrain2{
 	private program: Shader;
 	private ringVertexArray: VertexArray;
@@ -17,7 +13,7 @@ export default class Terrain2{
 	private playerPosition = vec3.create();
 	private k = 32;
 
-	constructor(){
+	constructor(vertexShaderCode: string, fragmentShaderCode: string){
 		this.program = new Shader(vertexShaderCode, fragmentShaderCode);
 
 		const {E, T, V} = this.generateMesh(this.k, false);
