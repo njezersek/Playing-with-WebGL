@@ -6,6 +6,7 @@ in vec2 aVertexTexcoord;
 
 out float scale;
 out float instanceID;
+out float terrainHeight;
 
 uniform mat4 uProjectionMatrix;
 uniform mat4 uViewMatrix;
@@ -68,7 +69,7 @@ void main() {
 	for(int i=0; i<4; i++){
 		height += snoise(v.xz/pow(2., float(i+3))) * pow(2.3, float(i));
 	}
-	//height += snoise(v.xz)*8.;
 	v.y = 1.;
+	terrainHeight = v.y - height;
 	gl_Position = uProjectionMatrix * uViewMatrix * v;
 }
