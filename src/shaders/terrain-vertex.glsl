@@ -1,11 +1,13 @@
 #version 300 es
 
+#define epsilon 0.1
+
 in vec4 aVertexPosition;
-in vec3 aVertexNormal;
-in vec2 aVertexTexcoord;
 
 out float scale;
 out float instanceID;
+out vec3 normal;
+out vec3 coordinate;
 
 uniform mat4 uProjectionMatrix;
 uniform mat4 uViewMatrix;
@@ -43,6 +45,17 @@ float snoise(vec2 v){
   return 130.0 * dot(m, g);
 }
 
+float height(vec2 v){
+	float h = 0.;
+	float biom = snoise(v/512.);
+	float m = abs(snoise(v/256.));
+	m = .8 - exp(-pow(abs(m*2.), 2.));
+	for(int i=0; i<6; i++){
+		h += snoise(v/pow(2., float(i+2))) * pow(2.7, float(i-1));
+	}
+	return (biom * m * abs(h) - 10.);
+}
+
 void main() {
 	instanceID = float(gl_InstanceID);
 	scale = pow(2., float(gl_InstanceID));
@@ -62,18 +75,20 @@ void main() {
 	}
 	v.xz *= scale;  // scale the ring
 
-	// compute height
-	float height = 0.;
-	float biom = snoise(v.xz/512.);
-	float m = abs(snoise(v.xz/256.));
-	// m = -2.*m*m*m + 3.*m*m - 0.6;
-	// mask = mask * mask * mask;
-	m = .9 - exp(-pow(abs(m*2.), 2.));
-	for(int i=0; i<6; i++){
-		height += snoise(v.xz/pow(2., float(i+2))) * pow(2.7, float(i-1));
-	}
-	//height += snoise(v.xz)*8.;
-	v.y = (biom * m * abs(height) - 10.);
-	//v.y = abs(height) - 20.;
+	// compute height and normal
+	v.y = height(v.xz);
+
+	coordinate = v.xyz;
+
+	vec3 vx = v.xyz + vec3(epsilon, 0, 0);
+	vx.y = height(vx.xz);
+	vec3 vz = v.xyz + vec3(0, 0, epsilon);
+	vz.y = height(vz.xz);
+
+	vec3 dx = vx - v.xyz;
+	vec3 dy = vz - v.xyz;
+
+	normal = normalize(cross(dx, dy));
+
 	gl_Position = uProjectionMatrix * uViewMatrix * v;
 }

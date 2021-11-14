@@ -21,7 +21,7 @@ void main() {
 	v.xz += -uPlayerPosition.xz; // move grid to player with step size acdording to scale 
 
 	// compute height
-	v.y = 1.;
+	v.y = 0.;
 
 	gl_Position = uProjectionMatrix * uViewMatrix * v;
 }

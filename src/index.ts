@@ -22,6 +22,7 @@ class App extends Application{
 	}
 
 	render(dt: number, t: number): void {
+		//console.log(1000/dt);
 		this.terrain.render(dt, t);
 		this.water.render(dt, t);
 	}

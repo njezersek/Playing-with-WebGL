@@ -83,13 +83,13 @@ export default class Terrain{
 		
 		this.program.setUniformVectorFloat('uIsLine', new Float32Array([0]));
 		glw.gl.drawElementsInstanced(glw.gl.TRIANGLES, this.ringVertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0, this.renderDistance);
-		this.program.setUniformVectorFloat('uIsLine', new Float32Array([1]));
-		glw.gl.drawElementsInstanced(glw.gl.LINES, this.ringVertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0, this.renderDistance);
+		// this.program.setUniformVectorFloat('uIsLine', new Float32Array([1]));
+		// glw.gl.drawElementsInstanced(glw.gl.LINES, this.ringVertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0, this.renderDistance);
 
 		this.centerVertexArray.enable();
 		this.program.setUniformVectorFloat('uIsLine', new Float32Array([0]));
 		glw.gl.drawElements(glw.gl.TRIANGLES, this.centerVertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0);
-		this.program.setUniformVectorFloat('uIsLine', new Float32Array([1]));
-		glw.gl.drawElements(glw.gl.LINES, this.centerVertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0);
+		// this.program.setUniformVectorFloat('uIsLine', new Float32Array([1]));
+		// glw.gl.drawElements(glw.gl.LINES, this.centerVertexArray.getNumIndcies(), glw.gl.UNSIGNED_SHORT, 0);
 	}
 }
