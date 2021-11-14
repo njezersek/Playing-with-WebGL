@@ -12,7 +12,7 @@ export default class Terrain{
 	private program: Shader;
 	private ringVertexArray: VertexArray;
 	private centerVertexArray: VertexArray;
-	private k = 32;
+	private k = 40;
 	private renderDistance = 6;
 
 	constructor(private camera: Camera){

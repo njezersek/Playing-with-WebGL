@@ -10,6 +10,7 @@ in vec3 normal;
 in vec3 coordinate;
 
 uniform float uIsLine;
+uniform vec3 uPlayerPosition;
 
 vec3 light = vec3(0,-1,0);
 
@@ -33,7 +34,8 @@ void main(){
 		vec3 rock_color = vec3(0.71, 0.75, 0.75);
 		vec3 snow_color = vec3(0.69, 0.78, 0.35);
 
-		
+		// distance from player
+		float d = distance(coordinate, -uPlayerPosition)/2000.;
 		// mix color
 		float steepnes = abs(dot(normal, vec3(0,-1,0)));
 		vec3 c = sand_color + sin(height*10000.)*.01;
@@ -41,7 +43,7 @@ void main(){
 		c = mix(c, rock_color, ramp(steepnes, 0., 0.5, 30.0));
 		c = mix(c, snow_color, ramp(height, 20., 5., 30.) * ramp(steepnes, 1., 0.3, 6.));
 
-		Color = vec4(l*c, 1);
+		Color = mix(vec4(l*c, 1), vec4(1), min(d, 1.));
 	}
 	else{
 		Color = vec4(1,1,1,1);
